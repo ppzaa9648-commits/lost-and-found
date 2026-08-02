@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ลงประกาศ - Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+                            800: '#9a3412', 900: '#7c2d12',
+                        }
+                    },
+                    fontFamily: { sans: ['Outfit', 'Noto Sans Thai', 'sans-serif'], }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#fafaf9] text-gray-800 pb-20 md:pb-10">
+
+    <!-- Header -->
+    <header class="glass sticky top-0 z-50 transition-all border-b border-gray-100">
+        <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="p-2 -ml-2 text-gray-600 hover:text-primary-500 bg-gray-100 hover:bg-primary-50 rounded-full transition-colors">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <h1 class="text-xl font-extrabold text-gray-900 tracking-tight">ลงประกาศใหม่</h1>
+            </div>
+            <a href="index.html" class="text-sm font-bold text-gray-500 hover:text-red-500 transition">ยกเลิก</a>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 py-8 animate-fade-in">
+        
+        <div class="bg-white p-6 md:p-8 rounded-3xl shadow-lg border border-gray-100 mb-8 relative overflow-hidden">
+            <!-- Decorative circle -->
+            <div class="absolute -top-10 -right-10 w-40 h-40 bg-primary-50 rounded-full blur-3xl opacity-60"></div>
+            
+            <form id="post-form" class="space-y-6 relative z-10">
+                
+                <!-- Type Selection -->
+                <div>
+                    <label class="block text-sm font-extrabold text-gray-800 mb-3">คุณต้องการทำอะไร?</label>
+                    <div class="grid grid-cols-2 gap-4">
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="type" value="lost" class="peer sr-only" checked>
+                            <div class="rounded-2xl border-2 border-gray-100 p-4 bg-gray-50 peer-checked:bg-red-50 peer-checked:border-red-500 peer-checked:shadow-md transition-all text-center flex flex-col items-center gap-2 group-hover:border-red-200">
+                                <div class="w-12 h-12 rounded-full bg-red-100 text-red-500 flex items-center justify-center mb-1">
+                                    <i data-lucide="search" class="w-6 h-6"></i>
+                                </div>
+                                <span class="block text-sm font-bold text-gray-900">ตามหาของหาย</span>
+                            </div>
+                        </label>
+                        <label class="cursor-pointer group">
+                            <input type="radio" name="type" value="found" class="peer sr-only">
+                            <div class="rounded-2xl border-2 border-gray-100 p-4 bg-gray-50 peer-checked:bg-green-50 peer-checked:border-green-500 peer-checked:shadow-md transition-all text-center flex flex-col items-center gap-2 group-hover:border-green-200">
+                                <div class="w-12 h-12 rounded-full bg-green-100 text-green-500 flex items-center justify-center mb-1">
+                                    <i data-lucide="hand-heart" class="w-6 h-6"></i>
+                                </div>
+                                <span class="block text-sm font-bold text-gray-900">เจอของคนอื่น</span>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <hr class="border-gray-100">
+
+                <!-- Image Upload -->
+                <div>
+                    <label class="block text-sm font-extrabold text-gray-800 mb-3">รูปภาพสิ่งของ <span class="text-gray-400 font-normal">(สูงสุด 4 รูป)</span></label>
+                    <div class="mt-1 p-4 border-2 border-primary-200 border-dashed rounded-3xl bg-gray-50 group relative">
+                        <div id="image-preview-container" class="grid grid-cols-2 gap-3 mb-4 hidden">
+                            <!-- Previews will be inserted here -->
+                        </div>
+                        <div class="space-y-2 text-center py-6" id="upload-prompt">
+                            <div class="w-16 h-16 mx-auto bg-white rounded-full flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                <i data-lucide="image-plus" class="h-8 w-8 text-primary-500"></i>
+                            </div>
+                            <div class="flex text-sm text-gray-600 justify-center mt-4">
+                                <label for="file-upload" class="relative cursor-pointer bg-white px-4 py-2 rounded-xl font-bold text-primary-600 hover:text-primary-700 shadow-sm transition">
+                                    <span>เลือกรูปภาพ</span>
+                                    <input id="file-upload" name="file-upload" type="file" class="sr-only" accept="image/*" multiple>
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 font-medium pt-2">อัปโหลดได้สูงสุด 4 รูป (ระบบจะบีบอัดให้อัตโนมัติ)</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Basic Details -->
+                <div>
+                    <label class="block text-sm font-extrabold text-gray-800 mb-2">หัวข้อประกาศ <span class="text-red-500">*</span></label>
+                    <input type="text" id="title" required class="input-field" placeholder="เช่น กระเป๋าสตางค์สีดำ, กุญแจรถ Honda">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-extrabold text-gray-800 mb-2">หมวดหมู่ <span class="text-red-500">*</span></label>
+                    <div class="relative">
+                        <select id="category" required class="input-field appearance-none cursor-pointer">
+                            <option value="" disabled selected>เลือกหมวดหมู่ที่ตรงกับสิ่งของ</option>
+                            <option value="electronics">📱 อุปกรณ์อิเล็กทรอนิกส์</option>
+                            <option value="wallet">👛 กระเป๋าสตางค์</option>
+                            <option value="keys">🔑 กุญแจ</option>
+                            <option value="documents">📄 เอกสาร/บัตร</option>
+                            <option value="others">📦 อื่นๆ</option>
+                        </select>
+                        <div class="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none text-gray-500">
+                            <i data-lucide="chevron-down" class="w-5 h-5"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-extrabold text-gray-800 mb-2">รายละเอียดเพิ่มเติม</label>
+                    <textarea id="description" rows="4" class="input-field" placeholder="อธิบายจุดสังเกต หรือรายละเอียดอื่นๆ ที่ช่วยให้ระบุสิ่งของได้ง่ายขึ้น..."></textarea>
+                </div>
+
+                <!-- Location and Date -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                    <div>
+                        <label class="block text-sm font-extrabold text-gray-800 mb-2">สถานที่ (ที่หาย/ที่พบ) <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-lucide="map-pin" class="w-5 h-5 text-primary-500"></i>
+                            </div>
+                            <input type="text" id="location" required class="input-field pl-11 bg-white" placeholder="ระบุสถานที่ให้ชัดเจน">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-extrabold text-gray-800 mb-2">วันที่ (ที่หาย/ที่พบ) <span class="text-red-500">*</span></label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i data-lucide="calendar" class="w-5 h-5 text-primary-500"></i>
+                            </div>
+                            <input type="date" id="date" required class="input-field pl-11 bg-white text-gray-700">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full btn-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary-500/30 text-lg mt-8 flex justify-center items-center gap-2">
+                    <i data-lucide="check-circle" class="w-6 h-6"></i> ยืนยันลงประกาศ
+                </button>
+            </form>
+        </div>
+    </main>
+
+    <script src="js/api.js"></script>
+    <script>
+        lucide.createIcons();
+
+        let selectedFiles = [];
+
+        async function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.src = e.target.result;
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let width = img.width;
+                        let height = img.height;
+                        const MAX_SIZE = 1200;
+
+                        if (width > height) {
+                            if (width > MAX_SIZE) {
+                                height *= MAX_SIZE / width;
+                                width = MAX_SIZE;
+                            }
+                        } else {
+                            if (height > MAX_SIZE) {
+                                width *= MAX_SIZE / height;
+                                height = MAX_SIZE;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        canvas.toBlob((blob) => {
+                            resolve(new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now()
+                            }));
+                        }, 'image/jpeg', 0.8);
+                    };
+                };
+            });
+        }
+
+        function updatePreview() {
+            const container = document.getElementById('image-preview-container');
+            const prompt = document.getElementById('upload-prompt');
+            
+            if (selectedFiles.length > 0) {
+                container.classList.remove('hidden');
+                container.innerHTML = '';
+                selectedFiles.forEach((file, index) => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const div = document.createElement('div');
+                        div.className = "relative aspect-square rounded-2xl overflow-hidden shadow-sm border border-gray-200 group-hover:border-primary-300 transition-colors";
+                        div.innerHTML = `
+                            <img src="${e.target.result}" class="w-full h-full object-cover">
+                            <button type="button" onclick="removeImage(${index})" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 hover:bg-red-600 shadow-md transition-all transform hover:scale-110">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        `;
+                        container.appendChild(div);
+                        lucide.createIcons();
+                    }
+                    reader.readAsDataURL(file);
+                });
+                
+                if (selectedFiles.length >= 4) {
+                    prompt.classList.add('hidden');
+                } else {
+                    prompt.classList.remove('hidden');
+                }
+            } else {
+                container.classList.add('hidden');
+                prompt.classList.remove('hidden');
+            }
+        }
+
+        window.removeImage = function(index) {
+            selectedFiles.splice(index, 1);
+            updatePreview();
+        }
+
+        document.getElementById('file-upload').addEventListener('change', function(e) {
+            const files = Array.from(e.target.files);
+            const remaining = 4 - selectedFiles.length;
+            const toAdd = files.slice(0, remaining);
+            
+            if (files.length > remaining) {
+                alert('เลือกรูปได้สูงสุด 4 รูปเท่านั้นครับ');
+            }
+            
+            selectedFiles = [...selectedFiles, ...toAdd];
+            updatePreview();
+            e.target.value = ''; // Reset input
+        });
+
+        document.getElementById('post-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i> กำลังบันทึก...';
+            btn.disabled = true;
+
+            try {
+                let imageUrls = [];
+                if (selectedFiles.length > 0) {
+                    btn.innerHTML = `<i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i> กำลังอัปโหลดรูปภาพ (0/${selectedFiles.length})...`;
+                    
+                    for (let i = 0; i < selectedFiles.length; i++) {
+                        btn.innerHTML = `<i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i> กำลังอัปโหลดรูปภาพ (${i + 1}/${selectedFiles.length})...`;
+                        const compressed = await compressImage(selectedFiles[i]);
+                        const url = await api.uploadImage(compressed);
+                        if (url) imageUrls.push(url);
+                    }
+                }
+
+                btn.innerHTML = '<i data-lucide="loader-2" class="w-6 h-6 animate-spin"></i> กำลังสร้างประกาศ...';
+
+                const type = document.querySelector('input[name="type"]:checked').value;
+                const title = document.getElementById('title').value;
+                const category = document.getElementById('category').value;
+                const description = document.getElementById('description').value;
+                const location = document.getElementById('location').value;
+                const date = document.getElementById('date').value;
+                
+                const postData = {
+                    type,
+                    title,
+                    category,
+                    description,
+                    location,
+                    lost_found_date: date,
+                    image_url: imageUrls.join(',') // Store as comma separated
+                };
+
+                await api.createPost(postData);
+                
+                alert('ลงประกาศสำเร็จ!');
+                window.location.href = 'index.html';
+            } catch (err) {
+                alert('เกิดข้อผิดพลาดในการลงประกาศ: ' + (err.message || 'ไม่ทราบสาเหตุ'));
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+</html>

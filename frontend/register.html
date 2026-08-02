@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>สมัครสมาชิก - Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+                            800: '#9a3412', 900: '#7c2d12',
+                        }
+                    },
+                    fontFamily: { sans: ['Outfit', 'Noto Sans Thai', 'sans-serif'], }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4 bg-cover bg-center bg-no-repeat"
+    style="background-image: url('https://images.unsplash.com/photo-1518600506278-4e8ef466b810?auto=format&fit=crop&q=80&w=1200&h=800');">
+
+    <!-- Dark Overlay -->
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"></div>
+
+    <div
+        class="relative w-full max-w-md glass p-8 md:p-10 rounded-[2rem] shadow-2xl animate-fade-in border border-white/40 my-8">
+
+        <div class="text-center mb-8">
+            <a href="index.html"
+                class="inline-flex items-center justify-center w-16 h-16 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg mb-4 text-primary-500 hover:scale-105 transition-transform">
+                <i data-lucide="user-plus" class="w-8 h-8"></i>
+            </a>
+            <h1 class="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">สร้างบัญชีใหม่</h1>
+            <p class="text-gray-600 font-medium">เพื่อเข้าร่วมคอมมูนิตี้ Lost & Found</p>
+        </div>
+
+        <form id="register-form" class="space-y-5">
+            <div>
+                <label class="block text-sm font-bold text-gray-800 mb-1.5 ml-1">ชื่อ-นามสกุล</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                        <i data-lucide="user" class="w-5 h-5"></i>
+                    </div>
+                    <input type="text" id="fullname" required class="input-field pl-12" placeholder="สมชาย ใจดี">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-800 mb-1.5 ml-1">อีเมล</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                        <i data-lucide="mail" class="w-5 h-5"></i>
+                    </div>
+                    <input type="email" id="email" required class="input-field pl-12" placeholder="you@example.com">
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-800 mb-1.5 ml-1">รหัสผ่าน</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                    </div>
+                    <input type="password" id="password" required class="input-field pl-12" placeholder="••••••••">
+                </div>
+            </div>
+
+            <button type="submit"
+                class="w-full btn-primary text-white font-bold py-4 rounded-2xl shadow-lg shadow-primary-500/30 text-lg mt-6 flex justify-center items-center gap-2">
+                สมัครสมาชิก <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+        </form>
+
+        <div class="mt-8 text-center">
+            <p class="text-gray-600 font-medium">มีบัญชีอยู่แล้ว? <a href="login.html"
+                    class="font-extrabold text-primary-600 hover:text-primary-700 transition underline decoration-2 underline-offset-4">เข้าสู่ระบบ</a>
+            </p>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        lucide.createIcons();
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> กำลังสมัคร...';
+            btn.disabled = true;
+
+            try {
+                const full_name = document.getElementById('fullname').value;
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+
+                // Submit to backend
+                await api.register({ email, password, full_name });
+
+                alert('สมัครสมาชิกสำเร็จ! กรุณาเข้าสู่ระบบ');
+                window.location.href = 'login.html';
+            } catch (err) {
+                alert('เกิดข้อผิดพลาดในการสมัครสมาชิก กรุณาลองใหม่อีกครั้ง');
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+
+</html>

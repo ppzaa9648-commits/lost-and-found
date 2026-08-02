@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>รายละเอียดประกาศ - Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+                            800: '#9a3412', 900: '#7c2d12',
+                        }
+                    },
+                    fontFamily: { sans: ['Outfit', 'Noto Sans Thai', 'sans-serif'], }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#fafaf9] text-gray-800 pb-20 md:pb-10">
+
+    <!-- Header -->
+    <header class="glass sticky top-0 z-50 transition-all border-b border-gray-100">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <a href="index.html" class="p-2 -ml-2 text-gray-600 hover:text-primary-500 bg-gray-100 hover:bg-primary-50 rounded-full transition-colors">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <span class="text-sm font-bold text-gray-500">ย้อนกลับ</span>
+            </div>
+            <button class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors">
+                <i data-lucide="flag" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-6 animate-fade-in" id="post-detail-container">
+        
+        <div class="bg-white rounded-[2rem] shadow-lg border border-gray-100 overflow-hidden mb-8">
+            <!-- Image Carousel/Hero -->
+            <div class="relative h-64 md:h-96 bg-gray-900 group">
+                <img id="detail-img" src="https://via.placeholder.com/1200x800?text=Loading" class="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-500 cursor-pointer">
+                <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-transparent to-transparent opacity-80 pointer-events-none"></div>
+                
+                <div class="absolute top-4 left-4 glass px-4 py-1.5 rounded-full flex items-center gap-2 shadow-md z-10">
+                    <span id="detail-type-badge" class="w-2.5 h-2.5 bg-gray-500 rounded-full animate-pulse"></span>
+                    <span id="detail-type-text" class="text-sm font-bold text-gray-900">กำลังโหลด...</span>
+                </div>
+                <div class="absolute top-4 right-4 glass px-4 py-1.5 rounded-full flex items-center gap-2 shadow-md z-10">
+                    <span id="detail-status-badge" class="w-2.5 h-2.5 bg-gray-500 rounded-full animate-pulse"></span>
+                    <span id="detail-status-text" class="text-sm font-bold text-gray-900">กำลังโหลด...</span>
+                </div>
+            </div>
+
+            <!-- Image Gallery -->
+            <div id="detail-gallery" class="hidden grid grid-cols-4 gap-2 p-4 bg-gray-50 border-b border-gray-100">
+                <!-- Gallery items will be inserted here -->
+            </div>
+
+            <!-- Content -->
+            <div class="p-6 md:p-10">
+                <div class="flex flex-col md:flex-row md:items-start justify-between gap-6 mb-8">
+                    <div>
+                        <h1 id="detail-title" class="text-2xl md:text-4xl font-extrabold text-gray-900 mb-3 tracking-tight">กำลังโหลดข้อมูล...</h1>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span id="detail-cat" class="bg-primary-50 text-primary-600 px-3 py-1 rounded-lg text-sm font-bold border border-primary-100">หมวดหมู่: -</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Left Col (Details) -->
+                    <div class="md:col-span-2 space-y-8">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                <i data-lucide="align-left" class="w-5 h-5 text-primary-500"></i> รายละเอียด
+                            </h3>
+                            <p id="detail-desc" class="text-gray-600 leading-relaxed bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                                -
+                            </p>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full bg-primary-100 text-primary-500 flex items-center justify-center shrink-0">
+                                    <i data-lucide="map-pin" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <span class="block text-xs font-bold text-gray-500 mb-1">สถานที่</span>
+                                    <span id="detail-loc" class="text-sm font-semibold text-gray-900">-</span>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 p-5 rounded-2xl border border-gray-100 flex items-start gap-4">
+                                <div class="w-10 h-10 rounded-full bg-primary-100 text-primary-500 flex items-center justify-center shrink-0">
+                                    <i data-lucide="calendar" class="w-5 h-5"></i>
+                                </div>
+                                <div>
+                                    <span class="block text-xs font-bold text-gray-500 mb-1">วันที่</span>
+                                    <span id="detail-date" class="text-sm font-semibold text-gray-900">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Col (Contact) -->
+                    <div>
+                        <div class="bg-gray-50 p-6 rounded-3xl border border-gray-100 sticky top-24 shadow-sm">
+                            <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">ข้อมูลติดต่อ</h3>
+                            
+                            <a id="detail-profile-link" href="#" class="flex items-center gap-4 mb-4 hover:opacity-80 transition">
+                                <img id="detail-user-img" src="https://ui-avatars.com/api/?name=User&background=ffedd5&color=ea580c" class="w-14 h-14 rounded-full border-2 border-white shadow-md">
+                                <div>
+                                    <h4 id="detail-user-name" class="font-extrabold text-gray-900 text-lg">กำลังโหลด...</h4>
+                                    <span class="text-xs text-primary-500 font-bold">ดูโปรไฟล์ →</span>
+                                </div>
+                            </a>
+
+                            <!-- LINE ID Display -->
+                            <div id="detail-line-id-box" class="hidden mb-4 bg-[#06C755]/10 border border-[#06C755]/30 rounded-2xl p-4">
+                                <p class="text-xs font-bold text-gray-500 mb-1">LINE ID</p>
+                                <p id="detail-line-id-text" class="font-extrabold text-[#06C755] text-lg"></p>
+                            </div>
+
+                            <!-- Manage Status (Owner Only) -->
+                            <div id="owner-manage-section" class="hidden mt-6 pt-6 border-t border-gray-100">
+                                <h3 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">จัดการสถานะ</h3>
+                                <div class="grid grid-cols-1 gap-2">
+                                    <button id="owner-status-btn" onclick="ownerUpdateStatus('claimed')" class="w-full py-2 px-4 rounded-xl text-xs font-bold bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100 transition">ตั้งเป็น: เสร็จสิ้น</button>
+                                </div>
+                            </div>
+
+
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+</html>

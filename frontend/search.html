@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ค้นหา - Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+                            800: '#9a3412', 900: '#7c2d12',
+                        }
+                    },
+                    fontFamily: { sans: ['Outfit', 'Noto Sans Thai', 'sans-serif'], }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-[#fafaf9] text-gray-800 flex flex-col min-h-screen pb-20 md:pb-0">
+
+    <!-- Header / Search Bar -->
+    <header class="glass sticky top-0 z-40 transition-all border-b border-gray-100">
+        <div class="max-w-6xl mx-auto px-4 py-4 flex flex-col md:flex-row md:items-center gap-4">
+            <div class="flex items-center gap-3 w-full md:w-auto">
+                <a href="index.html"
+                    class="p-2 -ml-2 text-gray-600 hover:text-primary-500 bg-gray-100 hover:bg-primary-50 rounded-full transition-colors md:hidden">
+                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                </a>
+                <h1 class="text-xl font-extrabold text-gray-900 tracking-tight">ค้นหา</h1>
+            </div>
+
+            <div class="flex-1 flex gap-2">
+                <div class="relative flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i data-lucide="search" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <input type="text" id="search-input" oninput="loadSearch()"
+                        class="w-full bg-white border border-gray-200 text-gray-900 text-sm rounded-full focus:ring-2 focus:ring-primary-500 focus:border-primary-500 block pl-11 py-2.5 font-medium shadow-sm transition"
+                        placeholder="ค้นหาชื่อสิ่งของ, สถานที่...">
+                </div>
+                <button onclick="document.getElementById('filter-section').classList.toggle('hidden')"
+                    class="flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 rounded-full hover:bg-primary-50 hover:text-primary-600 transition border border-gray-200 shadow-sm shrink-0 font-medium text-sm">
+                    <i data-lucide="sliders-horizontal" class="w-4 h-4"></i>
+                    <span class="hidden sm:inline">ตัวกรอง</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Filter Modal -->
+    <div id="filter-section"
+        class="hidden fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in">
+        <div class="bg-white w-full sm:w-auto sm:min-w-[400px] rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-extrabold text-gray-900">ตัวกรองการค้นหา</h3>
+                <button onclick="document.getElementById('filter-section').classList.add('hidden')"
+                    class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Type Filter -->
+                <div>
+                    <h4 class="text-sm font-bold text-gray-700 mb-3">ประเภทประกาศ</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="filter-all" onclick="updateSearchFilter({type: null})"
+                            class="px-5 py-2 rounded-full bg-gray-900 text-white text-xs font-bold whitespace-nowrap shadow-md transition-all">ทั้งหมด</button>
+                        <button id="filter-lost" onclick="updateSearchFilter({type: 'lost'})"
+                            class="px-5 py-2 rounded-full bg-white text-gray-600 border border-gray-100 hover:border-primary-500 hover:text-primary-600 transition-colors text-xs font-bold whitespace-nowrap shadow-sm transition-all">ตามหาของหาย</button>
+                        <button id="filter-found" onclick="updateSearchFilter({type: 'found'})"
+                            class="px-5 py-2 rounded-full bg-white text-gray-600 border border-gray-100 hover:border-primary-500 hover:text-primary-600 transition-colors text-xs font-bold whitespace-nowrap shadow-sm transition-all">เจอของ</button>
+                    </div>
+                </div>
+
+                <!-- Category Filter -->
+                <div>
+                    <h4 class="text-sm font-bold text-gray-700 mb-3">หมวดหมู่</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="cat-all" onclick="updateSearchFilter({category: null})"
+                            class="px-4 py-1.5 rounded-full bg-primary-100 text-primary-700 text-[11px] font-bold whitespace-nowrap border border-primary-200">ทุกหมวดหมู่</button>
+                        <button id="cat-electronics" onclick="updateSearchFilter({category: 'อิเล็กทรอนิกส์'})"
+                            class="px-4 py-1.5 rounded-full bg-white text-gray-500 text-[11px] font-bold whitespace-nowrap border border-gray-100 hover:border-primary-300">📱
+                            อิเล็กทรอนิกส์</button>
+                        <button id="cat-wallet" onclick="updateSearchFilter({category: 'กระเป๋า'})"
+                            class="px-4 py-1.5 rounded-full bg-white text-gray-500 text-[11px] font-bold whitespace-nowrap border border-gray-100 hover:border-primary-300">👛
+                            กระเป๋า</button>
+                        <button id="cat-doc" onclick="updateSearchFilter({category: 'เอกสาร'})"
+                            class="px-4 py-1.5 rounded-full bg-white text-gray-500 text-[11px] font-bold whitespace-nowrap border border-gray-100 hover:border-primary-300">📄
+                            เอกสาร/บัตร</button>
+                        <button id="cat-key" onclick="updateSearchFilter({category: 'กุญแจ'})"
+                            class="px-4 py-1.5 rounded-full bg-white text-gray-500 text-[11px] font-bold whitespace-nowrap border border-gray-100 hover:border-primary-300">🔑
+                            กุญแจ</button>
+                        <button id="cat-pet" onclick="updateSearchFilter({category: 'สัตว์เลี้ยง'})"
+                            class="px-4 py-1.5 rounded-full bg-white text-gray-500 text-[11px] font-bold whitespace-nowrap border border-gray-100 hover:border-primary-300">🐾
+                            สัตว์เลี้ยง</button>
+                        <button id="cat-other" onclick="updateSearchFilter({category: 'อื่นๆ'})"
+                            class="px-4 py-1.5 rounded-full bg-white text-gray-500 text-[11px] font-bold whitespace-nowrap border border-gray-100 hover:border-primary-300">📦
+                            อื่นๆ</button>
+                    </div>
+                </div>
+
+                <button onclick="document.getElementById('filter-section').classList.add('hidden')"
+                    class="w-full mt-4 py-3 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-700 transition shadow-lg shadow-primary-500/30 flex items-center justify-center gap-2">
+                    <i data-lucide="check" class="w-5 h-5"></i> ดูผลการค้นหา
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <main class="flex-1 max-w-6xl mx-auto w-full flex flex-col md:flex-row gap-6 p-4 animate-fade-in">
+
+        <!-- Search Results -->
+        <div class="flex-1">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-extrabold text-gray-900">ผลการค้นหา</h2>
+            </div>
+
+            <div id="post-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                <div class="col-span-full flex justify-center py-10">
+                    <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-primary-500"></i>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Bottom Nav (Mobile) -->
+    <nav
+        class="md:hidden glass-dark fixed bottom-0 left-0 w-full flex justify-around pb-safe pt-2 px-2 pb-2 z-50 rounded-t-3xl border-t border-white/10 shadow-2xl">
+        <a href="index.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-white transition">
+            <i data-lucide="home" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">หน้าแรก</span>
+        </a>
+        <a href="search.html" class="flex flex-col items-center p-2 text-primary-400">
+            <i data-lucide="search" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">ค้นหา</span>
+        </a>
+        <a href="create-post.html" class="flex flex-col items-center -mt-8">
+            <div
+                class="w-14 h-14 rounded-full bg-gradient-to-tr from-primary-600 to-primary-400 text-white flex items-center justify-center shadow-lg shadow-primary-500/40 border-4 border-slate-900 transform hover:scale-105 transition-transform">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[10px] font-medium text-gray-300 mt-1.5">ลงประกาศ</span>
+        </a>
+
+        <a href="profile.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-white transition">
+            <i data-lucide="user" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">โปรไฟล์</span>
+        </a>
+    </nav>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>lucide.createIcons();</script>
+</body>
+
+</html>

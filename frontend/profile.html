@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>โปรไฟล์ - Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+                            800: '#9a3412', 900: '#7c2d12',
+                        }
+                    },
+                    fontFamily: { sans: ['Outfit', 'Noto Sans Thai', 'sans-serif'], }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-[#fafaf9] text-gray-800 pb-24 md:pb-10">
+
+    <header class="glass sticky top-0 z-50 transition-all border-b border-gray-100">
+        <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+            <h1 class="text-xl font-extrabold text-gray-900 tracking-tight">โปรไฟล์ของฉัน</h1>
+            <button
+                class="p-2 text-gray-400 hover:text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors">
+
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 py-8 animate-fade-in">
+
+        <!-- Profile Header -->
+        <div
+            class="bg-white rounded-[2rem] shadow-sm border border-gray-100 p-8 mb-8 text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-primary-500 to-primary-600"></div>
+
+            <div class="relative z-10 flex flex-col items-center mt-12">
+                <div class="relative">
+                    <img id="profile-img" src="https://ui-avatars.com/api/?name=User&background=ffedd5&color=ea580c"
+                        class="w-28 h-28 rounded-full border-4 border-white shadow-xl bg-white object-cover">
+                    <button
+                        class="absolute bottom-0 right-0 w-8 h-8 bg-gray-900 text-white rounded-full flex items-center justify-center border-2 border-white shadow-sm hover:scale-110 transition">
+                        <i data-lucide="camera" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <h2 id="profile-name" class="text-2xl font-extrabold text-gray-900 mt-4 mb-2">กำลังโหลด...</h2>
+                <p id="profile-line-id-display" class="text-xs text-[#06C755] font-bold mb-6 hidden"></p>
+
+                <div class="flex gap-4">
+                    <button onclick="document.getElementById('line-id-modal').classList.remove('hidden')"
+                        class="btn-primary text-white font-bold px-6 py-2.5 rounded-full shadow-lg shadow-primary-500/30 flex items-center gap-2">
+                        <i data-lucide="edit-2" class="w-4 h-4"></i> ตั้งค่า LINE ID
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- LINE ID Modal -->
+        <div id="line-id-modal"
+            class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+            <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm">
+                <h3 class="text-xl font-extrabold text-gray-900 mb-2">ตั้งค่า LINE ID ของคุณ</h3>
+                <p class="text-sm text-gray-500 mb-5">ใส่ LINE ID ของคุณ (ที่ตั้งไว้ในแอป LINE ไปที่ Settings → Profile
+                    → LINE ID) เพื่อให้คนอื่นสามารถแอดเพื่อนคุณได้</p>
+                <div class="relative mb-4">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">@</span>
+                    <input id="line-id-input" type="text" placeholder="your_line_id" class="input-field pl-8 w-full">
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="document.getElementById('line-id-modal').classList.add('hidden')"
+                        class="flex-1 py-3 rounded-2xl border-2 border-gray-200 font-bold text-gray-600 hover:bg-gray-50 transition">ยกเลิก</button>
+                    <button onclick="saveLineId()"
+                        class="flex-1 py-3 rounded-2xl btn-primary text-white font-bold">บันทึก</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="grid grid-cols-2 gap-4 mb-8">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-center">
+                <div class="w-12 h-12 mx-auto bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mb-3">
+                    <i data-lucide="search" class="w-6 h-6"></i>
+                </div>
+                <div id="stat-lost" class="text-3xl font-extrabold text-gray-900 mb-1">0</div>
+                <div class="text-xs font-bold text-gray-500 uppercase tracking-wider">ตามหาของ</div>
+            </div>
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 text-center">
+                <div
+                    class="w-12 h-12 mx-auto bg-green-50 text-green-500 rounded-2xl flex items-center justify-center mb-3">
+                    <i data-lucide="hand-heart" class="w-6 h-6"></i>
+                </div>
+                <div id="stat-found" class="text-3xl font-extrabold text-gray-900 mb-1">0</div>
+                <div class="text-xs font-bold text-gray-500 uppercase tracking-wider">เจอของส่งคืน</div>
+            </div>
+        </div>
+
+        <!-- My Posts -->
+        <div class="mb-4 flex items-center justify-between">
+            <h3 class="text-lg font-extrabold text-gray-900">ประกาศของฉัน</h3>
+        </div>
+
+        <div id="my-posts-container" class="space-y-4">
+            <div class="text-center py-4 text-gray-500 text-sm">กำลังโหลด...</div>
+        </div>
+
+        <button onclick="api.logout()"
+            class="w-full mt-8 bg-red-50 text-red-600 font-bold py-4 rounded-2xl hover:bg-red-100 transition flex items-center justify-center gap-2">
+            <i data-lucide="log-out" class="w-5 h-5"></i> ออกจากระบบ
+        </button>
+
+    </main>
+
+    <!-- Bottom Nav -->
+    <nav
+        class="md:hidden glass-dark fixed bottom-0 left-0 w-full flex justify-around pb-safe pt-2 px-2 pb-2 z-50 rounded-t-3xl border-t border-white/10 shadow-2xl">
+        <a href="index.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-white transition">
+            <i data-lucide="home" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">หน้าแรก</span>
+        </a>
+        <a href="search.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-white transition">
+            <i data-lucide="search" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">ค้นหา</span>
+        </a>
+        <a href="create-post.html" class="flex flex-col items-center -mt-8">
+            <div
+                class="w-14 h-14 rounded-full bg-gradient-to-tr from-primary-600 to-primary-400 text-white flex items-center justify-center shadow-lg shadow-primary-500/40 border-4 border-slate-900 transform hover:scale-105 transition-transform">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[10px] font-medium text-gray-300 mt-1.5">ลงประกาศ</span>
+        </a>
+        <a href="profile.html" class="flex flex-col items-center p-2 text-primary-400">
+            <i data-lucide="user" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">โปรไฟล์</span>
+        </a>
+    </nav>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        lucide.createIcons();
+
+        async function saveLineId() {
+            const lineId = document.getElementById('line-id-input').value.trim().replace('@', '');
+            if (!lineId) { alert('กรุณากรอก LINE ID ก่อนครับ'); return; }
+
+            try {
+                const token = localStorage.getItem('access_token');
+                const resp = await fetch(`${API_BASE_URL}/users/me/line-id`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ line_social_id: lineId })
+                });
+                if (!resp.ok) throw new Error('บันทึกไม่สำเร็จ');
+
+                // Update display
+                const display = document.getElementById('profile-line-id-display');
+                display.textContent = `LINE ID: @${lineId}`;
+                display.classList.remove('hidden');
+                document.getElementById('line-id-modal').classList.add('hidden');
+                alert('บันทึก LINE ID สำเร็จแล้วครับ!');
+            } catch (e) {
+                alert('เกิดข้อผิดพลาด: ' + e.message);
+            }
+        }
+
+    </script>
+</body>
+
+</html>

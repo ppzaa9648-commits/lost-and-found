@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUPER ADMIN - Master Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Noto+Sans+Thai:wght@300;400;700&display=swap"
+        rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        super: {
+                            50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc',
+                            400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1',
+                            800: '#075985', 900: '#0c4a6e', 950: '#082f49',
+                        }
+                    },
+                    fontFamily: { sans: ['Outfit', 'Noto Sans Thai', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .tab-active {
+            border-bottom: 3px solid #0ea5e9;
+            color: #0ea5e9;
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body class="bg-[#f8fafc] min-h-screen font-sans text-slate-900">
+
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div class="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 bg-super-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-super-200">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">SUPER ADMIN</h1>
+                    <p class="text-[10px] font-bold text-super-600 uppercase tracking-widest leading-none">Master Access
+                    </p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <!-- Master Key Input -->
+                <div class="relative group">
+                    <i data-lucide="key" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="password" id="master-key" placeholder="Admin Master Key..."
+                        class="pl-9 pr-4 py-2 bg-slate-100 border-none rounded-xl text-xs font-bold outline-none focus:ring-2 focus:ring-super-500 transition-all w-48"
+                        onchange="loadAllData()">
+                </div>
+                <a href="../index.html"
+                    class="text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors">กลับหน้าหลัก</a>
+                <button onclick="loadAllData()" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i
+                        data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-[1600px] mx-auto px-6 py-8">
+        <!-- Stats Row -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="glass-card p-6 rounded-3xl shadow-sm">
+                <h3 class="text-slate-500 text-xs font-bold uppercase tracking-wider">Total Users</h3>
+                <p id="stat-users" class="text-3xl font-extrabold mt-1">0</p>
+            </div>
+            <div class="glass-card p-6 rounded-3xl shadow-sm">
+                <h3 class="text-slate-500 text-xs font-bold uppercase tracking-wider">Total Posts</h3>
+                <p id="stat-posts" class="text-3xl font-extrabold mt-1">0</p>
+            </div>
+            <div class="glass-card p-6 rounded-3xl shadow-sm border-l-4 border-amber-500">
+                <h3 class="text-slate-500 text-xs font-bold uppercase tracking-wider">Pending Approval</h3>
+                <p id="stat-pending" class="text-3xl font-extrabold mt-1 text-amber-600">0</p>
+            </div>
+            <div class="glass-card p-6 rounded-3xl shadow-sm bg-slate-900 text-white">
+                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider">System Status</h3>
+                <p class="text-xl font-bold mt-1 text-emerald-400">Online</p>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div class="flex gap-8 mb-6 border-b border-slate-200">
+            <button onclick="switchTab('users')" id="tab-btn-users"
+                class="pb-4 text-sm font-bold tab-active transition-all">จัดการผู้ใช้ (Users)</button>
+            <button onclick="switchTab('posts')" id="tab-btn-posts"
+                class="pb-4 text-sm font-bold text-slate-400 hover:text-slate-600 transition-all">จัดการโพสต์
+                (Posts)</button>
+        </div>
+
+        <!-- Section: Users -->
+        <section id="section-users" class="animate-fade-in">
+            <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-200">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">User Info</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Roles</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Status</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body" class="divide-y divide-slate-100">
+                        <tr>
+                            <td colspan="4" class="p-10 text-center text-slate-400">กำลังโหลดข้อมูล...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Section: Posts -->
+        <section id="section-posts" class="hidden animate-fade-in">
+            <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-200">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Post Content</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Category</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">Status</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="post-table-body" class="divide-y divide-slate-100">
+                        <tr>
+                            <td colspan="4" class="p-10 text-center text-slate-400">กำลังโหลดข้อมูล...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast"
+        class="fixed bottom-10 right-10 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl z-[100] font-bold text-sm">
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+
+        function getAdminHeaders() {
+            const key = document.getElementById('master-key').value;
+            const token = localStorage.getItem('access_token');
+            const headers = { 'Content-Type': 'application/json' };
+
+            if (key) headers['X-Admin-Key'] = key;
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            return headers;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        function switchTab(tab) {
+            document.getElementById('section-users').classList.toggle('hidden', tab !== 'users');
+            document.getElementById('section-posts').classList.toggle('hidden', tab !== 'posts');
+            document.getElementById('tab-btn-users').className = `pb-4 text-sm font-bold ${tab === 'users' ? 'tab-active' : 'text-slate-400'}`;
+            document.getElementById('tab-btn-posts').className = `pb-4 text-sm font-bold ${tab === 'posts' ? 'tab-active' : 'text-slate-400'}`;
+        }
+
+        async function loadAllData() {
+            try {
+                // Fetch Users
+                const uResp = await fetch(`${API_URL}/admin/users`, { headers: getAdminHeaders() });
+                const uData = await uResp.json();
+
+                if (uResp.status === 403 || uResp.status === 401) {
+                    showToast('Access Denied: Please enter correct Master Key');
+                    return;
+                }
+
+                renderUsers(uData.data || []);
+                document.getElementById('stat-users').textContent = (uData.data || []).length;
+
+                // Fetch Posts
+                const pResp = await fetch(`${API_URL}/admin/posts`, { headers: getAdminHeaders() });
+                const pData = await pResp.json();
+                renderPosts(pData.data || []);
+                document.getElementById('stat-posts').textContent = (pData.data || []).length;
+                document.getElementById('stat-pending').textContent = (pData.data || []).filter(p => p.status === 'pending').length;
+
+            } catch (err) {
+                console.error(err);
+                showToast('เกิดข้อผิดพลาดในการดึงข้อมูล');
+            }
+        }
+
+        function renderUsers(users) {
+            const body = document.getElementById('user-table-body');
+            body.innerHTML = users.length ? '' : '<tr><td colspan="4" class="p-10 text-center text-slate-400">ไม่มีข้อมูลผู้ใช้</td></tr>';
+
+            users.forEach(u => {
+                const meta = u.user_metadata || {};
+                const isAdmin = meta.is_admin === true;
+                const isSuper = meta.is_super_admin === true;
+                const isBanned = meta.is_banned === true;
+
+                const row = `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center overflow-hidden border">
+                                <img src="${meta.avatar_url || 'https://via.placeholder.com/40'}" class="w-full h-full object-cover">
+                            </div>
+                            <div>
+                                <div class="font-bold text-slate-900 flex items-center gap-2">
+                                    ${meta.full_name || 'User'}
+                                    <button onclick="actionChangeName('${u.id}', '${(meta.full_name || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-super-600 transition-colors" title="เปลี่ยนชื่อ"><i data-lucide="edit-3" class="w-3 h-3"></i></button>
+                                </div>
+                                <div class="text-xs text-slate-400">${u.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex gap-1">
+                            ${isSuper ? '<span class="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded uppercase">Super</span>' : ''}
+                            ${isAdmin ? '<span class="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded uppercase">Admin</span>' : ''}
+                            ${!isAdmin && !isSuper ? '<span class="px-2 py-0.5 bg-slate-100 text-slate-700 text-[10px] font-bold rounded uppercase">User</span>' : ''}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        ${isBanned ? '<span class="text-rose-500 font-bold text-xs">Banned</span>' : '<span class="text-emerald-500 font-bold text-xs">Active</span>'}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end gap-2">
+                            <button onclick="actionRole('${u.id}', ${!isAdmin}, false)" class="p-2 ${isAdmin ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'} rounded-lg transition-colors"><i data-lucide="shield" class="w-4 h-4"></i></button>
+                            <button onclick="actionRole('${u.id}', true, true)" class="p-2 ${isSuper ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600'} rounded-lg transition-colors"><i data-lucide="crown" class="w-4 h-4"></i></button>
+                            <button onclick="actionBan('${u.id}', ${!isBanned})" class="p-2 ${isBanned ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-600'} rounded-lg transition-colors"><i data-lucide="ban" class="w-4 h-4"></i></button>
+                            <button onclick="actionDeleteUser('${u.id}')" class="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+                body.innerHTML += row;
+            });
+            lucide.createIcons();
+        }
+
+        function renderPosts(posts) {
+            const body = document.getElementById('post-table-body');
+            body.innerHTML = posts.length ? '' : '<tr><td colspan="4" class="p-10 text-center text-slate-400">ไม่มีข้อมูลโพสต์</td></tr>';
+
+            posts.forEach(p => {
+                const row = `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-4">
+                            <img src="${(p.image_url && p.image_url.split(',')[0]) || 'https://via.placeholder.com/50'}" class="w-12 h-12 rounded-xl object-cover border shadow-sm">
+                            <div>
+                                <div class="font-bold text-slate-900">${p.title}</div>
+                                <div class="text-[10px] text-slate-400 font-bold uppercase">${p.location}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-xs font-bold text-slate-500">${p.category || 'Other'}</td>
+                    <td class="px-6 py-4">
+                        <select onchange="actionPostStatus('${p.id}', this.value)" class="text-[11px] font-bold rounded-lg px-2 py-1 bg-slate-100 border-none outline-none">
+                            <option value="pending" ${p.status === 'pending' ? 'selected' : ''}>WAITING</option>
+                            <option value="published" ${p.status === 'published' ? 'selected' : ''}>PUBLISHED</option>
+                            <option value="claimed" ${p.status === 'claimed' ? 'selected' : ''}>FINISHED</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end gap-2">
+                            <a href="../post-detail.html?id=${p.id}" class="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-blue-50 transition-colors"><i data-lucide="eye" class="w-4 h-4"></i></a>
+                            <button onclick="actionDeletePost('${p.id}')" class="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-rose-50 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+                body.innerHTML += row;
+            });
+            lucide.createIcons();
+        }
+
+        // Functions for Actions
+        async function actionRole(uId, isAdmin, isSuper) {
+            try {
+                const r = await fetch(`${API_URL}/super-admin/users/${uId}/role`, {
+                    method: 'PUT',
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify({ is_admin: isAdmin, is_super_admin: isSuper })
+                });
+                if (r.ok) { showToast('Role Updated'); loadAllData(); }
+            } catch (err) { showToast('Error updating role'); }
+        }
+
+        async function actionChangeName(uId, currentName) {
+            const newName = prompt('Enter new name for user:', currentName);
+            if (!newName || newName.trim() === '' || newName === currentName) return;
+            
+            try {
+                const r = await fetch(`${API_URL}/super-admin/users/${uId}/name`, {
+                    method: 'PUT',
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify({ full_name: newName.trim() })
+                });
+                if (r.ok) { showToast('User Name Updated'); loadAllData(); }
+                else { showToast('Failed to update name'); }
+            } catch (err) { showToast('Error updating name'); }
+        }
+
+        async function actionBan(uId, ban) {
+            try {
+                const r = await fetch(`${API_URL}/admin/users/${uId}/ban`, {
+                    method: 'PUT',
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify({ is_banned: ban })
+                });
+                if (r.ok) { showToast(ban ? 'User Banned' : 'User Unbanned'); loadAllData(); }
+            } catch (err) { showToast('Error updating ban status'); }
+        }
+
+        async function actionDeleteUser(uId) {
+            if (!confirm('ยืนยันการลบผู้ใช้?')) return;
+            try {
+                const r = await fetch(`${API_URL}/admin/users/${uId}`, { method: 'DELETE', headers: getAdminHeaders() });
+                if (r.ok) { showToast('User Deleted'); loadAllData(); }
+            } catch (err) { showToast('Error deleting user'); }
+        }
+
+        async function actionPostStatus(pId, s) {
+            try {
+                const r = await fetch(`${API_URL}/admin/posts/${pId}/status`, {
+                    method: 'PUT',
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify({ status: s })
+                });
+                if (r.ok) { showToast('Post Status Updated'); loadAllData(); }
+            } catch (err) { showToast('Error updating post'); }
+        }
+
+        async function actionDeletePost(pId) {
+            if (!confirm('ยืนยันการลบโพสต์?')) return;
+            try {
+                const r = await fetch(`${API_URL}/admin/posts/${pId}`, { method: 'DELETE', headers: getAdminHeaders() });
+                if (r.ok) { showToast('Post Deleted'); loadAllData(); }
+            } catch (err) { showToast('Error deleting post'); }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAllData();
+            lucide.createIcons();
+        });
+    </script>
+</body>
+
+</html>

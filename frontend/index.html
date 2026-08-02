@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AYAYA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+                            800: '#9a3412', 900: '#7c2d12',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'Noto Sans Thai', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-[#fafaf9] text-gray-800 pb-20 md:pb-0">
+
+    <!-- Top App Bar (Mobile) / Navbar (Desktop) -->
+    <header class="glass sticky top-0 z-50 transition-all duration-300 border-b border-gray-100">
+        <div class="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+            <a href="index.html" class="flex items-center gap-2 text-primary-600 group">
+                <div class="w-10 h-10 flex items-center justify-center transition-transform group-hover:scale-110">
+                    <img src="picture/logo-882x1024 (2).png" alt="Logo" class="w-full h-full object-contain">
+                </div>
+                <h1 class="text-2xl font-bold tracking-tight">STV Lost & Found</h1>
+            </a>
+
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex items-center gap-8">
+                <a href="index.html"
+                    class="text-primary-600 font-semibold relative after:content-[''] after:absolute after:-bottom-1 after:left-0 after:w-full after:h-0.5 after:bg-primary-500 after:rounded-full">หน้าแรก</a>
+                <a href="search.html" class="text-gray-500 font-medium hover:text-primary-500 transition">ค้นหา</a>
+                <a href="create-post.html"
+                    class="btn-primary text-white px-5 py-2.5 rounded-full font-semibold shadow-lg shadow-primary-500/30 flex items-center gap-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i> ลงประกาศ
+                </a>
+
+                <a href="admin/posts.html" id="desktop-admin-link" class="hidden text-primary-600 font-bold flex items-center gap-1 hover:text-primary-700 transition">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i> Admin
+                </a>
+
+                <a href="profile.html" class="flex items-center gap-2 hover:opacity-80 transition cursor-pointer">
+                    <div class="w-10 h-10 rounded-full overflow-hidden border-2 border-primary-100">
+                        <img src="https://ui-avatars.com/api/?name=User&background=ffedd5&color=ea580c" alt="Profile">
+                    </div>
+                </a>
+            </nav>
+
+            <!-- Mobile Notification/Search Icons -->
+            <div class="md:hidden flex items-center gap-4">
+                <a href="search.html"
+                    class="p-2 text-gray-500 hover:text-primary-500 hover:bg-primary-50 rounded-full transition"><i
+                        data-lucide="search" class="w-5 h-5"></i></a>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-5xl mx-auto px-4 py-8 animate-fade-in">
+
+        <!-- Hero Section -->
+        <div
+            class="relative rounded-3xl overflow-hidden mb-10 shadow-xl shadow-primary-500/10 border border-primary-100">
+            <!-- Background Image with Overlay -->
+            <div class="absolute inset-0">
+                <img src="https://images.pexels.com/videos/4822860/black-and-white-background-cool-wallpaper-hd-wallpapers-motion-4822860.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500"
+                    alt="Hero background" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-r from-primary-900/90 via-primary-800/80 to-transparent">
+                </div>
+            </div>
+
+            <div class="relative z-10 p-8 md:p-12 text-white max-w-2xl">
+                <div
+                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-sm font-medium mb-4">
+                    <span class="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                    ระบบของหายได้คืน
+                </div>
+                <h2 class="text-3xl md:text-5xl font-extrabold mb-4 leading-tight">ทำของหาย?<br><span
+                        class="text-primary-200">ไม่ใช่เรื่องใหญ่</span></h2>
+                <p class="text-primary-50 text-base md:text-lg mb-8 opacity-90 max-w-md">
+                    ระบบศูนย์กลางข้อมูลของหายได้คืนสำหรับนักเรียนโรงเรียนสิชลคุณาธารวิทยา
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4">
+                    <a href="create-post.html?type=lost"
+                        class="bg-white text-primary-600 px-6 py-3.5 rounded-2xl font-bold shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all text-center flex items-center justify-center gap-2">
+                        <i data-lucide="search" class="w-5 h-5"></i> ตามหาของหาย
+                    </a>
+                    <a href="create-post.html?type=found"
+                        class="bg-primary-600/80 backdrop-blur-md border border-primary-400/50 text-white px-6 py-3.5 rounded-2xl font-bold shadow-lg hover:bg-primary-600 hover:-translate-y-1 transition-all text-center flex items-center justify-center gap-2">
+                        <i data-lucide="hand-heart" class="w-5 h-5"></i> เจอของคนอื่น
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter/Tabs -->
+        <div class="flex items-center justify-between mb-6">
+            <h3 class="text-xl font-extrabold text-gray-900 flex items-center gap-2">
+                <i data-lucide="clock" class="w-5 h-5 text-primary-500"></i> ประกาศล่าสุด
+            </h3>
+            <div class="flex items-center gap-3">
+                <button onclick="document.getElementById('filter-section').classList.toggle('hidden')"
+                    class="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-700 rounded-full hover:bg-primary-50 hover:text-primary-600 transition border border-gray-200 shadow-sm font-medium text-xs">
+                    <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+                    <span>ตัวกรอง</span>
+                </button>
+                <a href="search.html"
+                    class="text-sm font-medium text-primary-600 hover:text-primary-700 hidden sm:flex items-center gap-1">
+                    ดูทั้งหมด <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Recent Posts Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4" id="post-container">
+            <!-- Posts will be dynamically loaded here by app.js -->
+            <div class="col-span-full flex justify-center py-10">
+                <i data-lucide="loader-2" class="w-8 h-8 animate-spin text-primary-500"></i>
+            </div>
+        </div>
+
+        <div class="mt-10 text-center">
+            <a href="search.html"
+                class="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-full bg-white text-gray-800 font-bold shadow-sm border border-gray-200 hover:border-primary-300 hover:text-primary-600 hover:shadow-md transition-all">
+                ดูประกาศทั้งหมด <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </a>
+        </div>
+    </main>
+
+    <!-- Filter Modal -->
+    <div id="filter-section"
+        class="hidden fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in px-4 pb-4">
+        <div class="bg-white w-full sm:w-auto sm:min-w-[400px] rounded-3xl p-6 shadow-2xl mb-[80px] sm:mb-0">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-lg font-extrabold text-gray-900">ตัวกรองประกาศ</h3>
+                <button onclick="document.getElementById('filter-section').classList.add('hidden')"
+                    class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-6">
+                <!-- Type Filter -->
+                <div>
+                    <h4 class="text-sm font-bold text-gray-700 mb-3">ประเภทประกาศ</h4>
+                    <div class="flex flex-wrap gap-2">
+                        <button id="filter-all"
+                            onclick="loadHomePosts(); document.getElementById('filter-section').classList.add('hidden')"
+                            class="px-5 py-2 rounded-full bg-gray-900 text-white text-xs font-bold whitespace-nowrap shadow-md transition-all">ทั้งหมด</button>
+                        <button id="filter-lost"
+                            onclick="loadHomePosts('lost'); document.getElementById('filter-section').classList.add('hidden')"
+                            class="px-5 py-2 rounded-full bg-white text-gray-600 border border-gray-100 hover:border-primary-500 hover:text-primary-600 transition-colors text-xs font-bold whitespace-nowrap shadow-sm transition-all">ตามหาของหาย</button>
+                        <button id="filter-found"
+                            onclick="loadHomePosts('found'); document.getElementById('filter-section').classList.add('hidden')"
+                            class="px-5 py-2 rounded-full bg-white text-gray-600 border border-gray-100 hover:border-primary-500 hover:text-primary-600 transition-colors text-xs font-bold whitespace-nowrap shadow-sm transition-all">เจอของ</button>
+                    </div>
+                </div>
+
+                <button onclick="document.getElementById('filter-section').classList.add('hidden')"
+                    class="w-full mt-4 py-3 rounded-xl bg-primary-600 text-white font-bold hover:bg-primary-700 transition shadow-lg shadow-primary-500/30 flex items-center justify-center gap-2">
+                    <i data-lucide="check" class="w-5 h-5"></i> ปิด
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- First Login: LINE ID Setup Modal (Mandatory) -->
+    <div id="first-login-modal"
+        class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
+        <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-sm">
+            <div class="w-16 h-16 mx-auto mb-4 bg-[#06C755]/10 rounded-full flex items-center justify-center">
+                <svg class="w-8 h-8 text-[#06C755]" viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                        d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.281.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314" />
+                </svg>
+            </div>
+            <h3 class="text-xl font-extrabold text-gray-900 mb-2 text-center">ตั้งค่า LINE ID ของคุณ</h3>
+            <p class="text-sm text-gray-500 mb-1 text-center">เพื่อให้คนอื่นสามารถติดต่อคุณได้เมื่อเจอของที่คุณหาย</p>
+            <p class="text-xs text-gray-400 mb-5 text-center">เปิดแอป LINE → Settings → Profile → LINE ID</p>
+            <div class="relative mb-5">
+                <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">@</span>
+                <input id="first-line-id-input" type="text" placeholder="your_line_id"
+                    class="input-field pl-8 w-full text-lg">
+            </div>
+            <button onclick="saveFirstLineId()"
+                class="w-full py-4 rounded-2xl bg-[#06C755] text-white font-extrabold text-lg hover:bg-[#05a847] transition shadow-lg shadow-green-500/30">
+                บันทึกและเริ่มใช้งาน
+            </button>
+            <p class="text-xs text-gray-400 text-center mt-3">คุณสามารถเปลี่ยนได้ในภายหลังที่หน้าโปรไฟล์</p>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation (Mobile Only) -->
+    <nav
+        class="md:hidden glass-dark fixed bottom-0 left-0 w-full flex justify-around pb-safe pt-2 px-2 pb-2 z-50 rounded-t-3xl border-t border-white/10 shadow-2xl">
+        <a href="index.html" class="flex flex-col items-center p-2 text-primary-400">
+            <i data-lucide="home" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">หน้าแรก</span>
+        </a>
+        <a href="search.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-white transition">
+            <i data-lucide="search" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">ค้นหา</span>
+        </a>
+        <a href="create-post.html" class="flex flex-col items-center -mt-8">
+            <div
+                class="w-14 h-14 rounded-full bg-gradient-to-tr from-primary-600 to-primary-400 text-white flex items-center justify-center shadow-lg shadow-primary-500/40 border-4 border-slate-900 transform hover:scale-105 transition-transform">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[10px] font-medium text-gray-300 mt-1.5">ลงประกาศ</span>
+        </a>
+
+        <a href="admin/posts.html" id="mobile-admin-link" class="hidden flex flex-col items-center p-2 text-primary-400 hover:text-white transition">
+            <i data-lucide="shield-check" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">แอดมิน</span>
+        </a>
+
+        <a href="profile.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-white transition">
+            <i data-lucide="user" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">โปรไฟล์</span>
+        </a>
+    </nav>
+
+    <script src="js/api.js"></script>
+    <script src="js/app.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

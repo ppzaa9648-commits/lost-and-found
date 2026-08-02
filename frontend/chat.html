@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ข้อความ - Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+                            800: '#9a3412', 900: '#7c2d12',
+                        }
+                    },
+                    fontFamily: { sans: ['Outfit', 'Noto Sans Thai', 'sans-serif'], }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#fafaf9] text-gray-800 flex flex-col h-screen overflow-hidden">
+
+    <header class="glass z-50 transition-all border-b border-gray-100 shrink-0">
+        <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+            <h1 class="text-xl font-extrabold text-gray-900 tracking-tight">ข้อความ</h1>
+            <div class="w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse shadow-sm"></div>
+        </div>
+    </header>
+
+    <!-- Chat List Area -->
+    <main class="flex-1 overflow-y-auto w-full max-w-3xl mx-auto p-4 pb-28 md:pb-4 space-y-3">
+        
+        <a href="chat-room.html?id=wichai" class="flex items-center gap-4 bg-white p-4 rounded-[2rem] shadow-sm border border-gray-100 hover:shadow-md transition">
+            <div class="relative shrink-0">
+                <img src="https://ui-avatars.com/api/?name=Wichai+P&background=ffedd5&color=ea580c" class="w-14 h-14 rounded-full">
+                <span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-baseline mb-1">
+                    <h3 class="font-extrabold text-gray-900 truncate">Wichai P.</h3>
+                    <span class="text-xs font-bold text-primary-500">10:42</span>
+                </div>
+                <p class="text-sm font-medium text-gray-900 truncate">สวัสดีครับ ผมเจอกระเป๋าสตางค์ของคุณครับ</p>
+            </div>
+            <div class="shrink-0 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">1</div>
+        </a>
+
+        <a href="chat-room.html?id=jane" class="flex items-center gap-4 bg-white p-4 rounded-[2rem] shadow-sm border border-gray-50 opacity-70 hover:opacity-100 transition">
+            <div class="relative shrink-0">
+                <img src="https://ui-avatars.com/api/?name=Jane+D&background=f3f4f6&color=4b5563" class="w-14 h-14 rounded-full grayscale">
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-baseline mb-1">
+                    <h3 class="font-bold text-gray-600 truncate">Jane D.</h3>
+                    <span class="text-xs font-bold text-gray-400">เมื่อวาน</span>
+                </div>
+                <p class="text-sm font-medium text-gray-500 truncate">ขอบคุณมากๆ ค่ะ</p>
+            </div>
+        </a>
+
+    </main>
+
+    <!-- Bottom Nav -->
+    <nav class="md:hidden glass-dark fixed bottom-0 left-0 w-full flex justify-around pb-safe pt-2 px-2 pb-2 z-50 rounded-t-3xl border-t border-white/10 shadow-2xl">
+        <a href="index.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-white transition">
+            <i data-lucide="home" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">หน้าแรก</span>
+        </a>
+        <a href="search.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-white transition">
+            <i data-lucide="search" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">ค้นหา</span>
+        </a>
+        <a href="create-post.html" class="flex flex-col items-center -mt-8">
+            <div class="w-14 h-14 rounded-full bg-gradient-to-tr from-primary-600 to-primary-400 text-white flex items-center justify-center shadow-lg shadow-primary-500/40 border-4 border-slate-900 transform hover:scale-105 transition-transform">
+                <i data-lucide="plus" class="w-6 h-6"></i>
+            </div>
+            <span class="text-[10px] font-medium text-gray-300 mt-1.5">ลงประกาศ</span>
+        </a>
+        <a href="chat.html" class="flex flex-col items-center p-2 text-primary-400 relative">
+            <i data-lucide="message-square" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">แชท</span>
+        </a>
+        <a href="profile.html" class="flex flex-col items-center p-2 text-gray-400 hover:text-white transition">
+            <i data-lucide="user" class="w-6 h-6 mb-1"></i>
+            <span class="text-[10px] font-medium">โปรไฟล์</span>
+        </a>
+    </nav>
+
+    <script>lucide.createIcons();</script>
+</body>
+</html>

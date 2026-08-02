@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADMIN - จัดการประกาศ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Noto+Sans+Thai:wght@300;400;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+                            800: '#9a3412', 900: '#7c2d12',
+                        }
+                    },
+                    fontFamily: { sans: ['Outfit', 'Noto Sans Thai', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .animate-fade-in { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+
+<body class="bg-[#f8fafc] min-h-screen font-sans text-slate-900">
+
+    <nav class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200">
+        <div class="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-primary-200">
+                    <i data-lucide="shield-check" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">ระบบจัดการ (Admin)</h1>
+                    <p class="text-[10px] font-bold text-primary-600 uppercase tracking-widest leading-none">จัดการประกาศ</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-4">
+                <a href="../index.html" class="text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors">กลับหน้าหลัก</a>
+                <button onclick="loadPosts()" class="p-2 hover:bg-slate-100 rounded-full transition-colors"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-[1600px] mx-auto px-6 py-8">
+        <!-- Stats Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass-card p-6 rounded-3xl shadow-sm">
+                <h3 class="text-slate-500 text-xs font-bold uppercase tracking-wider">จำนวนประกาศทั้งหมด</h3>
+                <p id="stat-posts" class="text-3xl font-extrabold mt-1">0</p>
+            </div>
+            <div class="glass-card p-6 rounded-3xl shadow-sm border-l-4 border-amber-500">
+                <h3 class="text-slate-500 text-xs font-bold uppercase tracking-wider">รอการอนุมัติ</h3>
+                <p id="stat-pending" class="text-3xl font-extrabold mt-1 text-amber-600">0</p>
+            </div>
+            <div class="glass-card p-6 rounded-3xl shadow-sm bg-slate-900 text-white">
+                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider">สถานะระบบ</h3>
+                <p class="text-xl font-bold mt-1 text-emerald-400">ออนไลน์</p>
+            </div>
+        </div>
+
+        <!-- Section: Posts -->
+        <section id="section-posts" class="animate-fade-in">
+            <h2 class="text-xl font-bold mb-4">จัดการประกาศทั้งหมด (Posts)</h2>
+            <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-200">
+                <table class="w-full text-left">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">เนื้อหาประกาศ</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">ผู้ลงประกาศ</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">หมวดหมู่</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">สถานะ</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">จัดการ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="post-table-body" class="divide-y divide-slate-100">
+                        <tr>
+                            <td colspan="5" class="p-10 text-center text-slate-400">กำลังโหลดข้อมูล...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-10 right-10 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl z-[100] font-bold text-sm">
+    </div>
+
+    <script src="../js/api.js"></script>
+    <script>
+        const API_URL = 'http://127.0.0.1:8000';
+
+        function getAdminHeaders() {
+            const token = localStorage.getItem('access_token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000);
+        }
+
+        async function loadPosts() {
+            try {
+                const token = localStorage.getItem('access_token');
+                if (!token) {
+                    alert('กรุณาเข้าสู่ระบบก่อนครับ');
+                    window.location.href = '../login.html';
+                    return;
+                }
+
+                const meResp = await fetch(`${API_URL}/users/me`, { headers: getAdminHeaders() });
+                if (meResp.status === 401 || meResp.status === 403) {
+                    alert('ปฏิเสธการเข้าถึง');
+                    window.location.href = '../index.html';
+                    return;
+                }
+
+                const pResp = await fetch(`${API_URL}/posts`, { headers: getAdminHeaders() });
+                const pData = await pResp.json();
+                
+                const posts = pData.data || [];
+                renderPosts(posts);
+                
+                document.getElementById('stat-posts').textContent = posts.length;
+                document.getElementById('stat-pending').textContent = posts.filter(p => p.status === 'pending').length;
+
+            } catch (err) {
+                console.error(err);
+                showToast('เกิดข้อผิดพลาดในการดึงข้อมูล');
+            }
+        }
+
+        function renderPosts(posts) {
+            const body = document.getElementById('post-table-body');
+            body.innerHTML = posts.length ? '' : '<tr><td colspan="5" class="p-10 text-center text-slate-400">ไม่มีข้อมูลโพสต์</td></tr>';
+
+            posts.forEach(p => {
+                const row = `
+                <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-4">
+                            <img src="${(p.image_url && p.image_url.split(',')[0]) || 'https://via.placeholder.com/50'}" class="w-12 h-12 rounded-xl object-cover border shadow-sm">
+                            <div>
+                                <div class="font-bold text-slate-900 line-clamp-1">${p.title}</div>
+                                <div class="text-[10px] text-slate-400 font-bold uppercase">${p.location}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-bold text-primary-600">${p.author_name || '-'}</div>
+                    </td>
+                    <td class="px-6 py-4 text-xs font-bold text-slate-500">${p.category || 'อื่นๆ'}</td>
+                    <td class="px-6 py-4">
+                        <select onchange="actionPostStatus('${p.id}', this.value)" class="text-[11px] font-bold rounded-lg px-2 py-1 bg-slate-100 border-none outline-none cursor-pointer">
+                            <option value="pending" ${p.status === 'pending' ? 'selected' : ''}>รอประกาศ</option>
+                            <option value="published" ${p.status === 'published' ? 'selected' : ''}>ประกาศแล้ว</option>
+                            <option value="claimed" ${p.status === 'claimed' ? 'selected' : ''}>เสร็จสิ้น</option>
+                        </select>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex justify-end gap-2">
+                            <a href="../post-detail.html?id=${p.id}" target="_blank" class="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-primary-50 hover:text-primary-600 transition-colors"><i data-lucide="eye" class="w-4 h-4"></i></a>
+                            <button onclick="actionDeletePost('${p.id}')" class="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                        </div>
+                    </td>
+                </tr>`;
+                body.innerHTML += row;
+            });
+            lucide.createIcons();
+        }
+
+        async function actionPostStatus(pId, s) {
+            try {
+                const r = await fetch(`${API_URL}/admin/posts/${pId}/status`, {
+                    method: 'PUT',
+                    headers: getAdminHeaders(),
+                    body: JSON.stringify({ status: s })
+                });
+                if (r.ok) { showToast('อัปเดตสถานะสำเร็จ'); loadPosts(); }
+                else { showToast('ไม่สามารถอัปเดตสถานะได้'); loadPosts(); }
+            } catch (err) { showToast('เกิดข้อผิดพลาดในการอัปเดตโพสต์'); }
+        }
+
+        async function actionDeletePost(pId) {
+            if (!confirm('ยืนยันการลบโพสต์?')) return;
+            try {
+                const r = await fetch(`${API_URL}/admin/posts/${pId}`, { method: 'DELETE', headers: getAdminHeaders() });
+                if (r.ok) { showToast('ลบโพสต์สำเร็จ'); loadPosts(); }
+            } catch (err) { showToast('เกิดข้อผิดพลาดในการลบโพสต์'); }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadPosts();
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เข้าสู่ระบบ - Lost & Found</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74',
+                            400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c',
+                            800: '#9a3412', 900: '#7c2d12',
+                        }
+                    },
+                    fontFamily: { sans: ['Outfit', 'Noto Sans Thai', 'sans-serif'], }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4 bg-cover bg-center bg-no-repeat"
+    style="background-image: url('https://images.unsplash.com/photo-1518600506278-4e8ef466b810?auto=format&fit=crop&q=80&w=1200&h=800');">
+
+    <!-- Dark Overlay -->
+    <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm"></div>
+
+    <div
+        class="relative w-full max-w-md glass p-8 md:p-10 rounded-[2rem] shadow-2xl animate-fade-in border border-white/40">
+
+        <div class="text-center mb-8">
+            <a href="index.html"
+                class="inline-flex items-center justify-center w-16 h-16 bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg mb-4 text-primary-500 hover:scale-105 transition-transform">
+                <i data-lucide="map-pin" class="w-8 h-8"></i>
+            </a>
+            <h1 class="text-3xl font-extrabold text-gray-900 mb-2 tracking-tight">ยินดีต้อนรับกลับมา</h1>
+            <p class="text-gray-600 font-medium">เข้าสู่ระบบเพื่อดำเนินการต่อ</p>
+        </div>
+
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5 ml-1">อีเมล</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i data-lucide="mail" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <input type="email" id="email" required
+                        class="w-full pl-11 pr-4 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-900 font-medium focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all shadow-sm"
+                        placeholder="you@example.com">
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1.5 ml-1">รหัสผ่าน</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i data-lucide="lock" class="w-5 h-5 text-gray-400"></i>
+                    </div>
+                    <input type="password" id="password" required
+                        class="w-full pl-11 pr-4 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-900 font-medium focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all shadow-sm"
+                        placeholder="••••••••">
+                </div>
+            </div>
+
+            <button type="submit" id="submit-btn"
+                class="w-full btn-primary bg-primary-600 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-primary-500/30 text-lg flex items-center justify-center gap-2 hover:-translate-y-0.5 transition-all">
+                <span>เข้าสู่ระบบด้วย Email</span>
+                <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            </button>
+        </form>
+
+        <div class="mt-6 flex items-center justify-center space-x-4">
+            <div class="h-px bg-gray-300 flex-1"></div>
+            <span class="text-sm font-medium text-gray-400">หรือ</span>
+            <div class="h-px bg-gray-300 flex-1"></div>
+        </div>
+
+        <div id="login-container" class="space-y-5 mt-6">
+            <button id="line-login-btn" type="button"
+                class="w-full text-white font-bold py-3.5 rounded-2xl shadow-lg text-lg flex justify-center items-center gap-3 transition-transform hover:scale-[1.02]"
+                style="background-color: #00B900;">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/LINE_logo.svg" alt="LINE"
+                    class="w-7 h-7 filter brightness-0 invert">
+                เข้าสู่ระบบด้วย LINE
+            </button>
+        </div>
+
+        <p class="text-center text-sm font-medium text-gray-600 mt-6 mb-4">
+            ยังไม่มีบัญชีใช่หรือไม่? <a href="register.html" class="text-primary-600 font-bold hover:text-primary-700 hover:underline">สมัครสมาชิก</a>
+        </p>
+
+        <div class="pt-4 border-t border-gray-200/50 text-center">
+            <a href="admin/login.html"
+                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/50 text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-white transition shadow-sm">
+                <i data-lucide="shield" class="w-4 h-4"></i> สำหรับผู้ดูแลระบบ
+            </a>
+        </div>
+    </div>
+
+    <script src="js/api.js"></script>
+    <script>
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> กำลังเข้าสู่ระบบ...';
+            btn.disabled = true;
+
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                await api.loginWithEmail(email, password);
+            } catch (err) {
+                alert('อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือเกิดข้อผิดพลาด: ' + err.message);
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        });
+
+        document.getElementById('line-login-btn').addEventListener('click', async (e) => {
+            const btn = e.currentTarget;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin filter brightness-0 invert"></i> กำลังเปลี่ยนหน้า...';
+            btn.disabled = true;
+
+            try {
+                await api.loginWithLine();
+            } catch (err) {
+                alert('เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง');
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
+                lucide.createIcons();
+            }
+        });
+    </script>
+</body>
+
+</html>

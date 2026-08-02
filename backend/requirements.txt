@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+supabase
+pydantic
+python-multipart
+python-dotenv
+line-bot-sdk
+boto3
+httpx
