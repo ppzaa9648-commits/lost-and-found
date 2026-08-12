@@ -144,6 +144,27 @@
             </div>
         </div>
 
+        <!-- Recommendations Section -->
+        <div class="bg-white rounded-[2rem] shadow-lg border border-gray-100 p-6 md:p-10 mb-8">
+            <div class="flex items-center gap-3 mb-6 bg-primary-50 p-4 rounded-2xl border border-primary-100">
+                <div class="p-2.5 bg-primary-100 text-primary-600 rounded-xl">
+                    <i data-lucide="sparkles" class="w-6 h-6 animate-pulse"></i>
+                </div>
+                <div>
+                    <h3 class="font-extrabold text-gray-900 text-lg">รายการเบาะแสแนะนำที่อาจตรงกัน (Potential Matches)</h3>
+                    <p class="text-xs text-gray-500 font-medium">คำนวณและจับคู่ข้อมูลของหายและเจอของจากระบบด้วยอัลกอริทึมวิเคราะห์ความสัมพันธ์แบบเรียลไทม์</p>
+                </div>
+            </div>
+            
+            <div id="detail-recommendations-list" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Loading state placeholder -->
+                <div class="col-span-full text-center py-10 text-gray-500 font-medium">
+                    <div class="animate-spin inline-block w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full mb-2"></div>
+                    <p class="text-sm">กำลังคำนวณหาเบาะแสที่ตรงกัน...</p>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <script src="js/api.js"></script>

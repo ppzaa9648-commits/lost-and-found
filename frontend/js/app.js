@@ -169,6 +169,11 @@ async function loadProfile() {
         });
 
         if (!response.ok) {
+            if (response.status === 401) {
+                localStorage.removeItem('access_token');
+                window.location.href = 'login.html';
+                return;
+            }
             throw new Error("Unauthorized");
         }
 
@@ -381,6 +386,96 @@ async function loadPostDetail() {
                 }
             } catch (e) {
                 console.warn("Could not load poster info", e);
+            }
+        }
+
+        // Load matching recommendations
+        try {
+            const recsResult = await api.getRecommendations(postId);
+            const recommendations = recsResult.data || [];
+            const recsList = document.getElementById('detail-recommendations-list');
+            if (recsList) {
+                recsList.innerHTML = '';
+                if (recommendations.length === 0) {
+                    recsList.innerHTML = `
+                        <div class="col-span-full text-center py-10 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-gray-500 font-medium">
+                            <i data-lucide="search-code" class="w-12 h-12 mx-auto text-gray-400 mb-3 block"></i>
+                            ไม่พบเบาะแสอื่นในระบบที่ใกล้เคียงกับประกาศนี้ในขณะนี้
+                        </div>
+                    `;
+                } else {
+                    recommendations.forEach(item => {
+                        const images = item.image_url ? item.image_url.split(',') : [];
+                        const primaryImg = images.length > 0 && images[0] ? images[0] : 'https://via.placeholder.com/400x300?text=No+Image';
+                        
+                        let reasons = [];
+                        if (item.match_breakdown) {
+                            if (item.match_breakdown.category && item.match_breakdown.category.score > 0) reasons.push("หมวดหมู่ตรงกัน");
+                            if (item.match_breakdown.location && item.match_breakdown.location.score >= 10) reasons.push("สถานที่ใกล้เคียง");
+                            if (item.match_breakdown.date && item.match_breakdown.date.score >= 6) reasons.push("ช่วงเวลาใกล้เคียงกัน");
+                            if (item.match_breakdown.title && item.match_breakdown.title.score >= 10) reasons.push("หัวข้อคล้ายกัน");
+                        }
+                        const reasonsText = reasons.join(', ') || 'ข้อมูลสอดคล้องกัน';
+                        
+                        function getMatchBadgeColor(score) {
+                            if (score >= 80) return 'bg-green-50 text-green-700 border-green-200';
+                            if (score >= 50) return 'bg-amber-50 text-amber-700 border-amber-200';
+                            return 'bg-gray-50 text-gray-700 border-gray-200';
+                        }
+                        
+                        const div = document.createElement('div');
+                        div.className = "bg-white border border-gray-200 rounded-2xl p-4 flex gap-4 hover:shadow-md transition-shadow relative overflow-hidden group";
+                        div.innerHTML = `
+                            <!-- Image -->
+                            <div class="w-24 h-24 rounded-xl overflow-hidden bg-gray-50 flex-shrink-0 border border-gray-100">
+                                <img src="${primaryImg}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300">
+                            </div>
+
+                            <!-- Details -->
+                            <div class="flex-1 flex flex-col justify-between min-w-0">
+                                <div>
+                                    <div class="flex items-center justify-between gap-2 mb-1">
+                                        <span class="inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-gray-100 text-gray-600">
+                                            ${item.type === 'lost' ? 'ตามหาของหาย' : 'เจอของคนอื่น'}
+                                        </span>
+                                    </div>
+                                    <h4 class="font-bold text-gray-900 truncate text-sm mb-1">${item.title}</h4>
+                                    
+                                    <!-- Location and Date -->
+                                    <div class="space-y-0.5 text-xs text-gray-500 font-medium">
+                                        <div class="flex items-center gap-1">
+                                            <i data-lucide="map-pin" class="w-3.5 h-3.5 text-gray-400"></i>
+                                            <span class="truncate text-gray-600">${item.location || '-'}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <i data-lucide="calendar" class="w-3.5 h-3.5 text-gray-400"></i>
+                                            <span class="text-gray-600">${item.lost_found_date ? item.lost_found_date.split('T')[0] : 'ไม่ระบุ'}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mt-2 flex justify-between items-center pt-1 border-t border-gray-50">
+                                    <span class="text-[10px] text-gray-400">โดย: ${item.author_name || 'ผู้ใช้งาน'}</span>
+                                    <a href="post-detail.html?id=${item.id}" class="text-xs font-bold text-primary-600 hover:text-primary-700 flex items-center gap-0.5">
+                                        ดูรายละเอียด <i data-lucide="external-link" class="w-3 h-3"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                        recsList.appendChild(div);
+                    });
+                }
+                lucide.createIcons();
+            }
+        } catch (e) {
+            console.error("Error displaying recommendations on detail page", e);
+            const recsList = document.getElementById('detail-recommendations-list');
+            if (recsList) {
+                recsList.innerHTML = `
+                    <div class="col-span-full text-center py-6 text-red-500 text-sm font-medium">
+                        ไม่สามารถโหลดข้อมูลเบาะแสจับคู่ในขณะนี้ได้
+                    </div>
+                `;
             }
         }
 

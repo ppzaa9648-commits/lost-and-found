@@ -94,6 +94,12 @@ const api = {
                 },
                 body: JSON.stringify(postData)
             });
+            if (response.status === 401) {
+                localStorage.removeItem('access_token');
+                alert("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง");
+                window.location.href = 'login.html';
+                throw new Error("Session expired, redirecting to login...");
+            }
             const data = await response.json();
             if (!response.ok) {
                 throw new Error(data.detail || "Error creating post");
@@ -102,6 +108,18 @@ const api = {
         } catch (error) {
             console.error("Create Post Error:", error);
             throw error;
+        }
+    },
+
+    async getRecommendations(postId) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/posts/${postId}/recommendations`);
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.detail || "Error fetching recommendations");
+            return data;
+        } catch (error) {
+            console.error("Get Recommendations Error:", error);
+            return { data: [] };
         }
     },
 

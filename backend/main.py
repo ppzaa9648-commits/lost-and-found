@@ -31,6 +31,19 @@ def _ensure_user_metadata(user_id: str, defaults: dict):
     supabase_admin.auth.admin.update_user_by_id(user_id, {"user_metadata": new_meta})
 
 # -------------------------------------------------
+# Helper: safe user token authentication
+# -------------------------------------------------
+def _get_user_from_token(token: str):
+    supabase = get_supabase()
+    try:
+        user_resp = supabase.auth.get_user(token)
+        if not user_resp or not user_resp.user:
+            raise HTTPException(status_code=401, detail="Unauthorized: User not found")
+        return user_resp.user
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Unauthorized: Token invalid or expired")
+
+# -------------------------------------------------
 # Helper: require admin (admin OR super admin)
 # -------------------------------------------------
 def _require_admin(request: Request):
@@ -38,14 +51,11 @@ def _require_admin(request: Request):
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Unauthorized")
     token = auth_header.split(" ")[1]
-    supabase = get_supabase()
-    user_resp = supabase.auth.get_user(token)
-    if not user_resp.user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    meta = user_resp.user.user_metadata or {}
+    user = _get_user_from_token(token)
+    meta = user.user_metadata or {}
     if not (meta.get("is_admin") or meta.get("is_super_admin")):
         raise HTTPException(status_code=403, detail="Admin privileges required")
-    return user_resp.user.id
+    return user.id
 
 # -------------------------------------------------
 # Helper: require super admin (only the top owner)
@@ -55,14 +65,11 @@ def _require_super_admin(request: Request):
     if not auth_header or not auth_header.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Unauthorized")
     token = auth_header.split(" ")[1]
-    supabase = get_supabase()
-    user_resp = supabase.auth.get_user(token)
-    if not user_resp.user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    meta = user_resp.user.user_metadata or {}
+    user = _get_user_from_token(token)
+    meta = user.user_metadata or {}
     if not meta.get("is_super_admin"):
         raise HTTPException(status_code=403, detail="Super admin required")
-    return user_resp.user.id
+    return user.id
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
 LINE_CLIENT_ID = os.getenv("LINE_CLIENT_ID", "")
@@ -386,15 +393,13 @@ def create_post(post: PostCreate, request: Request):
     token = auth_header.split(" ")[1]
     
     supabase = get_supabase()
-    user_resp = supabase.auth.get_user(token)
-    if not user_resp.user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-        
+    user = _get_user_from_token(token)
+    
     new_post = {k: v for k, v in post.dict().items() if v is not None}
-    new_post["user_id"] = user_resp.user.id
+    new_post["user_id"] = user.id
     
     # Supabase จะสร้าง UUID ให้เองตามที่ตั้งไว้ใน Default ของคอลัมน์ id
-    print("DEBUG INSERT DATA:", new_post)
+    # print("DEBUG INSERT DATA:", new_post)
     try:
         response = supabase.table("posts").insert(new_post).execute()
         created_data = response.data[0]
@@ -409,7 +414,7 @@ def create_post(post: PostCreate, request: Request):
                 if not img_urls:
                     img_urls = ["https://via.placeholder.com/400x300?text=No+Image"]
                 
-                user_metadata = user_resp.user.user_metadata or {}
+                user_metadata = user.user_metadata or {}
                 line_id = user_metadata.get('line_social_id')
                 
                 is_lost = created_data.get('type') == 'lost'
@@ -548,6 +553,202 @@ def get_post(post_id: str):
         raise HTTPException(status_code=404, detail="Post not found")
     return {"data": response.data[0]}
 
+def _tokenize_text(text: str) -> list:
+    import re
+    if not text:
+        return []
+    text = text.lower().strip()
+    
+    # แยกตามวรรคและสัญลักษณ์ก่อน
+    raw_tokens = text.split()
+    tokens = []
+    
+    for token in raw_tokens:
+        # ตัดอักขระพิเศษที่ไม่ใช่ภาษาไทย/อังกฤษ/ตัวเลข
+        token = re.sub(r'[^\w\u0e00-\u0e7f]', '', token)
+        if not token:
+            continue
+        
+        # ตรวจสอบว่ามีภาษาไทยหรือไม่
+        has_thai = bool(re.search(r'[\u0e00-\u0e7f]', token))
+        if has_thai:
+            # ใช้ Bigram (2 อักษรติดกัน) สำหรับข้อความภาษาไทยเพื่อความแม่นยำในการคำนวณความคล้าย
+            if len(token) <= 2:
+                tokens.append(token)
+            else:
+                for i in range(len(token) - 1):
+                    tokens.append(token[i:i+2])
+        else:
+            # ภาษาอังกฤษหรือตัวเลขให้ใช้เป็นคำเดี่ยวๆ
+            tokens.append(token)
+            
+    return tokens
+
+def calculate_match_score(new_post: dict, candidate: dict) -> dict:
+    from datetime import datetime
+    score = 0
+    breakdown = {}
+    
+    # 1. Category Matching (Max 35 points)
+    category_score = 35 if new_post.get("category") == candidate.get("category") else 0
+    score += category_score
+    breakdown["category"] = {
+        "score": category_score,
+        "max": 35,
+        "message": "หมวดหมู่ตรงกัน" if category_score > 0 else "หมวดหมู่ไม่ตรงกัน"
+    }
+    
+    # 2. Text Similarity (Max 35 points)
+    title1 = new_post.get("title", "") or ""
+    title2 = candidate.get("title", "") or ""
+    desc1 = new_post.get("description", "") or ""
+    desc2 = candidate.get("description", "") or ""
+    
+    tokens1_title = _tokenize_text(title1)
+    tokens2_title = _tokenize_text(title2)
+    
+    title_overlap_score = 0
+    if tokens1_title and tokens2_title:
+        intersection = set(tokens1_title).intersection(set(tokens2_title))
+        union = set(tokens1_title).union(set(tokens2_title))
+        jaccard = len(intersection) / len(union) if union else 0
+        
+        # Substring bonus: if one title contains the other completely (and length > 2)
+        if len(title1) > 2 and len(title2) > 2 and (title1.lower() in title2.lower() or title2.lower() in title1.lower()):
+            title_overlap_score = max(14, int(jaccard * 20))
+        else:
+            title_overlap_score = int(jaccard * 20)
+    score += title_overlap_score
+    breakdown["title"] = {
+        "score": title_overlap_score,
+        "max": 20,
+        "message": f"ความคล้ายคลึงของหัวข้อ ({title_overlap_score}/20)"
+    }
+    
+    desc_overlap_score = 0
+    tokens1_desc = _tokenize_text(desc1)
+    tokens2_desc = _tokenize_text(desc2)
+    if tokens1_desc and tokens2_desc:
+        intersection = set(tokens1_desc).intersection(set(tokens2_desc))
+        union = set(tokens1_desc).union(set(tokens2_desc))
+        jaccard = len(intersection) / len(union) if union else 0
+        
+        if len(desc1) > 5 and len(desc2) > 5 and (desc1.lower() in desc2.lower() or desc2.lower() in desc1.lower()):
+            desc_overlap_score = max(10, int(jaccard * 15))
+        else:
+            desc_overlap_score = int(jaccard * 15)
+    score += desc_overlap_score
+    breakdown["description"] = {
+        "score": desc_overlap_score,
+        "max": 15,
+        "message": f"ความคล้ายคลึงของรายละเอียด ({desc_overlap_score}/15)"
+    }
+    
+    # 3. Location Matching (Max 18 points)
+    loc1 = new_post.get("location", "") or ""
+    loc2 = candidate.get("location", "") or ""
+    loc_score = 0
+    if loc1 and loc2:
+        loc1_clean = loc1.lower().strip()
+        loc2_clean = loc2.lower().strip()
+        if loc1_clean == loc2_clean:
+            loc_score = 18
+        elif len(loc1_clean) > 2 and len(loc2_clean) > 2 and (loc1_clean in loc2_clean or loc2_clean in loc1_clean):
+            loc_score = 12
+        else:
+            tok1 = _tokenize_text(loc1)
+            tok2 = _tokenize_text(loc2)
+            if tok1 and tok2:
+                intersection = set(tok1).intersection(set(tok2))
+                union = set(tok1).union(set(tok2))
+                jaccard = len(intersection) / len(union) if union else 0
+                loc_score = int(jaccard * 10)
+    score += loc_score
+    breakdown["location"] = {
+        "score": loc_score,
+        "max": 18,
+        "message": "สถานที่ตรงกัน" if loc_score == 18 else ("สถานที่ใกล้เคียงกัน" if loc_score >= 10 else ("สถานที่ต่างกันแต่มีส่วนคล้าย" if loc_score > 0 else "สถานที่ต่างกัน"))
+    }
+    
+    # 4. Date Proximity (Max 12 points)
+    date_score = 0
+    d1_str = new_post.get("lost_found_date")
+    d2_str = candidate.get("lost_found_date")
+    diff_days = None
+    if d1_str and d2_str:
+        try:
+            d1 = datetime.strptime(d1_str.split("T")[0], "%Y-%m-%d")
+            d2 = datetime.strptime(d2_str.split("T")[0], "%Y-%m-%d")
+            diff_days = abs((d1 - d2).days)
+            if diff_days == 0:
+                date_score = 12
+            elif diff_days <= 2:
+                date_score = 10
+            elif diff_days <= 4:
+                date_score = 8
+            elif diff_days <= 7:
+                date_score = 6
+            elif diff_days <= 14:
+                date_score = 4
+            else:
+                date_score = 2
+        except Exception:
+            date_score = 0
+    score += date_score
+    
+    date_msg = "ช่วงเวลาเดียวกัน" if date_score == 12 else (f"ช่วงเวลาใกล้เคียงกัน ห่างกัน {diff_days} วัน" if diff_days is not None and date_score >= 4 else "ช่วงเวลาห่างกันค่อนข้างมาก")
+    breakdown["date"] = {
+        "score": date_score,
+        "max": 12,
+        "message": date_msg
+    }
+    
+    return {"score": min(score, 100), "breakdown": breakdown}
+
+@app.get("/posts/{post_id}/recommendations")
+def get_recommendations(post_id: str):
+    supabase = get_supabase()
+    post_res = supabase.table("posts").select("*").eq("id", post_id).execute()
+    if not post_res.data:
+        raise HTTPException(status_code=404, detail="Post not found")
+    new_post = post_res.data[0]
+    
+    opposite_type = "found" if new_post["type"] == "lost" else "lost"
+    # Select published/active items
+    candidates_res = supabase.table("posts").select("*").eq("type", opposite_type).neq("status", "claimed").execute()
+    candidates = candidates_res.data or []
+    
+    scored_candidates = []
+    for cand in candidates:
+        match_info = calculate_match_score(new_post, cand)
+        cand_copy = dict(cand)
+        cand_copy["match_score"] = match_info["score"]
+        cand_copy["match_breakdown"] = match_info["breakdown"]
+        scored_candidates.append(cand_copy)
+        
+    scored_candidates.sort(key=lambda x: x["match_score"], reverse=True)
+    
+    top_6 = scored_candidates[:6]
+    
+    # Map author names
+    service_key = os.getenv("SUPABASE_SERVICE_KEY")
+    if service_key and service_key.upper() not in ("YOUR_SUPABASE_SERVICE_KEY", "YOUR_SUPABASE_SERVICE_ROLE_KEY"):
+        from supabase import create_client
+        supabase_admin = create_client(os.getenv("SUPABASE_URL"), service_key)
+        try:
+            users = supabase_admin.auth.admin.list_users()
+            user_map = {}
+            for u in users:
+                meta = u.user_metadata or {}
+                user_map[u.id] = meta.get("full_name") or meta.get("name") or "ผู้ใช้งาน"
+            
+            for p in top_6:
+                p["author_name"] = user_map.get(p.get("user_id"), "ผู้ใช้งาน")
+        except Exception as e:
+            print(f"Failed to fetch users: {e}")
+            
+    return {"data": top_6, "message": "Recommendations generated successfully"}
+
 @app.put("/posts/{post_id}")
 def update_post(post_id: str, post: PostUpdate, request: Request):
     auth_header = request.headers.get("Authorization")
@@ -556,14 +757,12 @@ def update_post(post_id: str, post: PostUpdate, request: Request):
     token = auth_header.split(" ")[1]
 
     supabase = get_supabase()
-    user_resp = supabase.auth.get_user(token)
-    if not user_resp.user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    user = _get_user_from_token(token)
 
     # Determine if user is admin via metadata flag
     is_admin = False
     try:
-        metadata = user_resp.user.user_metadata or {}
+        metadata = user.user_metadata or {}
         is_admin = metadata.get("is_admin", False)
     except Exception:
         is_admin = False
@@ -573,7 +772,7 @@ def update_post(post_id: str, post: PostUpdate, request: Request):
         existing_post = supabase.table("posts").select("user_id").eq("id", post_id).execute()
         if not existing_post.data:
             raise HTTPException(status_code=404, detail="Post not found")
-        if existing_post.data[0]["user_id"] != user_resp.user.id:
+        if existing_post.data[0]["user_id"] != user.id:
             raise HTTPException(status_code=403, detail="You do not have permission to update this post")
             
         if post.status is not None and post.status != "claimed":
@@ -641,19 +840,7 @@ def send_message(msg: MessageCreate):
 # --- SUPER ADMIN ENDPOINTS ---
 # Require admin role via user_metadata.is_admin == true
 
-def _require_admin(request: Request):
-    auth_header = request.headers.get("Authorization")
-    if not auth_header or not auth_header.startswith("Bearer "):
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    token = auth_header.split(" ")[1]
-    supabase = get_supabase()
-    user_resp = supabase.auth.get_user(token)
-    if not user_resp.user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
-    metadata = user_resp.user.user_metadata or {}
-    if not metadata.get("is_admin", False):
-        raise HTTPException(status_code=403, detail="Admin privileges required")
-    return user_resp.user.id
+# Duplicate _require_admin helper deleted, using definition from lines 49-58.
 
 @app.get("/admin/users")
 def admin_list_users(request: Request):
@@ -768,11 +955,9 @@ def admin_update_status(post_id: str, request: Request, status: str = Body(..., 
     token = auth_header.split(" ")[1]
 
     supabase = get_supabase()
-    user_resp = supabase.auth.get_user(token)
-    if not user_resp.user:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+    user = _get_user_from_token(token)
 
-    metadata = user_resp.user.user_metadata or {}
+    metadata = user.user_metadata or {}
     is_admin = metadata.get("is_admin", False)
     is_super = metadata.get("is_super_admin", False)
     if not is_admin and not is_super:
