@@ -438,6 +438,9 @@ async function loadPostDetail() {
                                         <span class="inline-block text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-gray-100 text-gray-600">
                                             ${item.type === 'lost' ? 'ตามหาของหาย' : 'เจอของคนอื่น'}
                                         </span>
+                                        <span class="px-2 py-0.5 text-xs font-bold rounded-full border ${getMatchBadgeColor(item.match_score)}">
+                                            โอกาสตรงกัน ${item.match_score}%
+                                        </span>
                                     </div>
                                     <h4 class="font-bold text-gray-900 truncate text-sm mb-1">${item.title}</h4>
                                     
