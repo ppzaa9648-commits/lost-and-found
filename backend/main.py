@@ -71,6 +71,16 @@ def _require_super_admin(request: Request):
         raise HTTPException(status_code=403, detail="Super admin required")
     return user.id
 
+# -------------------------------------------------
+# Helper: get Supabase admin client (bypasses RLS)
+# -------------------------------------------------
+def _get_supabase_admin():
+    service_key = os.getenv("SUPABASE_SERVICE_KEY")
+    if not service_key or service_key.upper() in ("YOUR_SUPABASE_SERVICE_KEY", "YOUR_SUPABASE_SERVICE_ROLE_KEY"):
+        raise HTTPException(status_code=503, detail="Service key not configured")
+    from supabase import create_client
+    return create_client(os.getenv("SUPABASE_URL"), service_key)
+
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
 LINE_CLIENT_ID = os.getenv("LINE_CLIENT_ID", "")
 LINE_CHANNEL_SECRET = os.getenv("LINE_CHANNEL_SECRET", "")
@@ -759,15 +769,20 @@ def update_post(post_id: str, post: PostUpdate, request: Request):
     supabase = get_supabase()
     user = _get_user_from_token(token)
 
-    # Determine if user is admin via metadata flag
+    # Determine if user is admin or super admin via metadata flag
     is_admin = False
+    is_super = False
     try:
         metadata = user.user_metadata or {}
         is_admin = metadata.get("is_admin", False)
+        is_super = metadata.get("is_super_admin", False)
     except Exception:
         is_admin = False
+        is_super = False
 
-    if not is_admin:
+    is_privileged = is_admin or is_super
+
+    if not is_privileged:
         # Check ownership for regular users
         existing_post = supabase.table("posts").select("user_id").eq("id", post_id).execute()
         if not existing_post.data:
@@ -779,7 +794,18 @@ def update_post(post_id: str, post: PostUpdate, request: Request):
             raise HTTPException(status_code=400, detail="คุณสามารถเปลี่ยนสถานะเป็น 'เสร็จสิ้น (เจ้าของมารับแล้ว)' ได้เท่านั้น")
 
     update_data = {k: v for k, v in post.dict().items() if v is not None}
-    response = supabase.table("posts").update(update_data).eq("id", post_id).execute()
+    
+    # Try using admin client to bypass RLS for admins/super admins if service key is configured
+    try:
+        supabase_admin = _get_supabase_admin()
+        is_placeholder = False
+    except HTTPException:
+        is_placeholder = True
+        
+    if is_privileged and not is_placeholder:
+        response = supabase_admin.table("posts").update(update_data).eq("id", post_id).execute()
+    else:
+        response = supabase.table("posts").update(update_data).eq("id", post_id).execute()
     if not response.data:
         raise HTTPException(status_code=404, detail="Post not found or could not update")
     return {"message": "Post updated successfully", "data": response.data[0]}
@@ -845,22 +871,14 @@ def send_message(msg: MessageCreate):
 @app.get("/admin/users")
 def admin_list_users(request: Request):
     _require_admin(request)
-    service_key = os.getenv("SUPABASE_SERVICE_KEY")
-    if not service_key or service_key == "YOUR_SUPABASE_SERVICE_KEY":
-        raise HTTPException(status_code=503, detail="Service key not configured")
-    from supabase import create_client
-    supabase_admin = create_client(os.getenv("SUPABASE_URL"), service_key)
+    supabase_admin = _get_supabase_admin()
     users = supabase_admin.auth.admin.list_users()
     return {"data": users, "message": "User list"}
 
 @app.delete("/admin/users/{user_id}")
 def admin_delete_user(user_id: str, request: Request):
     _require_admin(request)
-    service_key = os.getenv("SUPABASE_SERVICE_KEY")
-    if not service_key or service_key == "YOUR_SUPABASE_SERVICE_KEY":
-        raise HTTPException(status_code=503, detail="Service key not configured")
-    from supabase import create_client
-    supabase_admin = create_client(os.getenv("SUPABASE_URL"), service_key)
+    supabase_admin = _get_supabase_admin()
     try:
         supabase_admin.auth.admin.delete_user(user_id)
         return {"message": f"User {user_id} deleted"}
@@ -871,11 +889,7 @@ def admin_delete_user(user_id: str, request: Request):
 def super_admin_update_role(user_id: str, request: Request, is_admin: bool = Body(..., embed=True), is_super_admin: bool = Body(False, embed=True)):
     """Only Super Admin can change roles of other users."""
     _require_super_admin(request)
-    service_key = os.getenv("SUPABASE_SERVICE_KEY")
-    if not service_key or service_key == "YOUR_SUPABASE_SERVICE_KEY":
-        raise HTTPException(status_code=503, detail="Service key not configured")
-    from supabase import create_client
-    supabase_admin = create_client(os.getenv("SUPABASE_URL"), service_key)
+    supabase_admin = _get_supabase_admin()
     try:
         supabase_admin.auth.admin.update_user_by_id(user_id, {"user_metadata": {"is_admin": is_admin, "is_super_admin": is_super_admin}})
         return {"message": f"User {user_id} role updated", "is_admin": is_admin, "is_super_admin": is_super_admin}
@@ -886,11 +900,7 @@ def super_admin_update_role(user_id: str, request: Request, is_admin: bool = Bod
 def super_admin_update_name(user_id: str, request: Request, full_name: str = Body(..., embed=True)):
     """Only Super Admin can change names of other users."""
     _require_super_admin(request)
-    service_key = os.getenv("SUPABASE_SERVICE_KEY")
-    if not service_key or service_key == "YOUR_SUPABASE_SERVICE_KEY":
-        raise HTTPException(status_code=503, detail="Service key not configured")
-    from supabase import create_client
-    supabase_admin = create_client(os.getenv("SUPABASE_URL"), service_key)
+    supabase_admin = _get_supabase_admin()
     try:
         supabase_admin.auth.admin.update_user_by_id(user_id, {"user_metadata": {"full_name": full_name}})
         return {"message": f"User {user_id} name updated", "full_name": full_name}
@@ -902,11 +912,7 @@ def admin_update_user_role(user_id: str, request: Request, is_admin: bool = Body
     """Allow Admin to give Admin role? Actually, let's restrict this to Super Admin too for safety, 
     or keep it as requested: 'Super Admin is above admin and can give admin role'."""
     _require_super_admin(request)
-    service_key = os.getenv("SUPABASE_SERVICE_KEY")
-    if not service_key or service_key == "YOUR_SUPABASE_SERVICE_KEY":
-        raise HTTPException(status_code=503, detail="Service key not configured")
-    from supabase import create_client
-    supabase_admin = create_client(os.getenv("SUPABASE_URL"), service_key)
+    supabase_admin = _get_supabase_admin()
     try:
         supabase_admin.auth.admin.update_user_by_id(user_id, {"user_metadata": {"is_admin": is_admin}})
         return {"message": f"User {user_id} role updated", "is_admin": is_admin}
@@ -916,11 +922,7 @@ def admin_update_user_role(user_id: str, request: Request, is_admin: bool = Body
 @app.put("/admin/users/{user_id}/ban")
 def admin_ban_user(user_id: str, request: Request, is_banned: bool = Body(..., embed=True)):
     _require_admin(request)
-    service_key = os.getenv("SUPABASE_SERVICE_KEY")
-    if not service_key or service_key == "YOUR_SUPABASE_SERVICE_KEY":
-        raise HTTPException(status_code=503, detail="Service key not configured")
-    from supabase import create_client
-    supabase_admin = create_client(os.getenv("SUPABASE_URL"), service_key)
+    supabase_admin = _get_supabase_admin()
     try:
         supabase_admin.auth.admin.update_user_by_id(user_id, {"user_metadata": {"is_banned": is_banned}})
         return {"message": f"User {user_id} ban status updated", "is_banned": is_banned}
@@ -967,13 +969,7 @@ def admin_update_status(post_id: str, request: Request, status: str = Body(..., 
     if status not in allowed_statuses:
         raise HTTPException(status_code=400, detail="Invalid status value")
 
-    # We need to use the service key to bypass RLS
-    service_key = os.getenv("SUPABASE_SERVICE_KEY")
-    if not service_key or service_key == "YOUR_SUPABASE_SERVICE_KEY":
-        raise HTTPException(status_code=503, detail="Service key not configured")
-    
-    from supabase import create_client
-    supabase_admin = create_client(os.getenv("SUPABASE_URL"), service_key)
+    supabase_admin = _get_supabase_admin()
 
     admin_name = metadata.get("full_name") or metadata.get("name") or "Admin"
 
