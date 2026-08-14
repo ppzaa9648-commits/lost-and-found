@@ -1,8 +1,10 @@
 import os
+from pathlib import Path
 from supabase import create_client, Client
 from dotenv import load_dotenv
 
-load_dotenv()
+dotenv_path = Path(__file__).resolve().parent / '.env'
+load_dotenv(dotenv_path=dotenv_path)
 
 # Use the explicitly provided keys if env vars are missing
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://edtqnpooywmwxjcgcnqj.supabase.co")
