@@ -45,6 +45,12 @@
         </div>
 
         <form id="login-form" class="space-y-4">
+            <!-- Super Admin Toggle -->
+            <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
+                <label class="text-sm font-bold text-gray-700">Super Admin Login</label>
+                <input type="checkbox" id="is-super-admin" class="w-4 h-4 cursor-pointer">
+            </div>
+
             <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1.5 ml-1">อีเมล</label>
                 <div class="relative">
@@ -56,7 +62,7 @@
                         placeholder="you@example.com">
                 </div>
             </div>
-            <div>
+            <div id="password-field">
                 <label class="block text-sm font-bold text-gray-700 mb-1.5 ml-1">รหัสผ่าน</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -105,6 +111,24 @@
 
     <script src="js/api.js"></script>
     <script>
+        const superAdminCheckbox = document.getElementById('is-super-admin');
+        const passwordField = document.getElementById('password-field');
+        const passwordInput = document.getElementById('password');
+        const submitBtn = document.getElementById('submit-btn');
+
+        // Toggle password field visibility
+        superAdminCheckbox.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                passwordField.style.display = 'none';
+                passwordInput.removeAttribute('required');
+                submitBtn.querySelector('span').textContent = 'Super Admin Login';
+            } else {
+                passwordField.style.display = 'block';
+                passwordInput.setAttribute('required', 'required');
+                submitBtn.querySelector('span').textContent = 'เข้าสู่ระบบด้วย Email';
+            }
+        });
+
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
@@ -113,12 +137,32 @@
             btn.disabled = true;
 
             const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
+            const isSuperAdmin = document.getElementById('is-super-admin').checked;
 
             try {
-                await api.loginWithEmail(email, password);
+                if (isSuperAdmin) {
+                    // Super admin login (ID only)
+                    const response = await fetch(`${API_BASE_URL}/auth/login/superadmin`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: email })
+                    });
+                    
+                    if (!response.ok) {
+                        const error = await response.json();
+                        throw new Error(error.detail || 'Super Admin login failed');
+                    }
+                    
+                    const data = await response.json();
+                    localStorage.setItem('access_token', data.token);
+                    window.location.href = 'admin/posts.html';
+                } else {
+                    // Normal login (email + password)
+                    const password = document.getElementById('password').value;
+                    await api.loginWithEmail(email, password);
+                }
             } catch (err) {
-                alert('อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือเกิดข้อผิดพลาด: ' + err.message);
+                alert('เข้าสู่ระบบล้มเหลว: ' + err.message);
                 btn.innerHTML = originalHTML;
                 btn.disabled = false;
                 lucide.createIcons();

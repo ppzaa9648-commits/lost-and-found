@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, 
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from database import get_supabase
-from models import UserRegister, UserLogin, PostCreate, PostUpdate, MessageCreate
+from models import UserRegister, UserLogin, SuperAdminLogin, PostCreate, PostUpdate, MessageCreate
 import uuid
 import httpx
 import urllib.parse
@@ -377,6 +377,43 @@ def login(user: UserLogin):
         return {"token": res.session.access_token, "message": "Login successful"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+# --- SUPER ADMIN LOGIN (ID only, no password) ---
+@app.post("/auth/login/superadmin")
+def login_superadmin(data: SuperAdminLogin):
+    """Super admin login with ID only (no password required)"""
+    supabase = get_supabase()
+    service_key = os.getenv("SUPABASE_SERVICE_KEY")
+    
+    if not service_key or service_key.upper() in ("YOUR_SUPABASE_SERVICE_KEY", "YOUR_SUPABASE_SERVICE_ROLE_KEY"):
+        raise HTTPException(status_code=503, detail="Service key not configured")
+    
+    from supabase import create_client
+    supabase_admin = create_client(os.getenv("SUPABASE_URL"), service_key)
+    
+    try:
+        # Get user by email
+        user_resp = supabase_admin.auth.admin.get_user_by_email(data.email).execute()
+        if not user_resp or not user_resp.user:
+            raise HTTPException(status_code=400, detail="User not found")
+        
+        user = user_resp.user
+        metadata = user.user_metadata or {}
+        
+        # Check if user is super admin
+        if not metadata.get("is_super_admin"):
+            raise HTTPException(status_code=403, detail="Not a super admin")
+        
+        # Generate a session token for super admin (using admin API)
+        session_resp = supabase_admin.auth.admin.create_session(user_id=user.id).execute()
+        if not session_resp or not session_resp.session:
+            raise HTTPException(status_code=400, detail="Failed to create session")
+        
+        return {"token": session_resp.session.access_token, "message": "Super admin login successful"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Login failed: {str(e)}")
 
 # --- USERS ---
 @app.get("/users/me")
