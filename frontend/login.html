@@ -116,15 +116,13 @@
         const passwordInput = document.getElementById('password');
         const submitBtn = document.getElementById('submit-btn');
 
-        // Toggle password field visibility
+        // Toggle password label (always show, just change label)
         superAdminCheckbox.addEventListener('change', (e) => {
             if (e.target.checked) {
-                passwordField.style.display = 'none';
-                passwordInput.removeAttribute('required');
+                passwordField.querySelector('label').textContent = 'Super Admin Password (ใส่รหัสผ่าน superadmin)';
                 submitBtn.querySelector('span').textContent = 'Super Admin Login';
             } else {
-                passwordField.style.display = 'block';
-                passwordInput.setAttribute('required', 'required');
+                passwordField.querySelector('label').textContent = 'รหัสผ่าน';
                 submitBtn.querySelector('span').textContent = 'เข้าสู่ระบบด้วย Email';
             }
         });
@@ -137,15 +135,16 @@
             btn.disabled = true;
 
             const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
             const isSuperAdmin = document.getElementById('is-super-admin').checked;
 
             try {
                 if (isSuperAdmin) {
-                    // Super admin login (ID only)
+                    // Super admin login
                     const response = await fetch(`${API_BASE_URL}/auth/login/superadmin`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: email })
+                        body: JSON.stringify({ email: email, password: password })
                     });
                     
                     if (!response.ok) {
@@ -157,8 +156,7 @@
                     localStorage.setItem('access_token', data.token);
                     window.location.href = 'admin/posts.html';
                 } else {
-                    // Normal login (email + password)
-                    const password = document.getElementById('password').value;
+                    // Normal login
                     await api.loginWithEmail(email, password);
                 }
             } catch (err) {

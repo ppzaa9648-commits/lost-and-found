@@ -14,6 +14,7 @@ class UserLogin(BaseModel):
 
 class SuperAdminLogin(BaseModel):
     email: str
+    password: str
 
 class PostCreate(BaseModel):
     type: str # 'lost' or 'found'

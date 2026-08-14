@@ -378,44 +378,26 @@ def login(user: UserLogin):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# --- SUPER ADMIN LOGIN (ID only, no password) ---
+# --- SUPER ADMIN LOGIN (with simple password) ---
 @app.post("/auth/login/superadmin")
 def login_superadmin(data: SuperAdminLogin):
-    """Super admin login with ID only (no password required)"""
-    service_key = os.getenv("SUPABASE_SERVICE_KEY")
-    
-    if not service_key or service_key.upper() in ("YOUR_SUPABASE_SERVICE_KEY", "YOUR_SUPABASE_SERVICE_ROLE_KEY"):
-        raise HTTPException(status_code=503, detail="Service key not configured")
-    
-    from supabase import create_client
-    supabase_admin = create_client(os.getenv("SUPABASE_URL"), service_key)
+    """Super admin login with email and simple password"""
+    supabase = get_supabase()
     
     try:
-        # List all users and find by email
-        users_list = supabase_admin.auth.admin.list_users()
-        user = None
+        # Try to login with email + password
+        res = supabase.auth.sign_in_with_password({"email": data.email, "password": data.password})
+        if not res.session:
+            raise HTTPException(status_code=400, detail="Invalid credentials")
         
-        if users_list:
-            for u in users_list:
-                if u.email == data.email:
-                    user = u
-                    break
-        
-        if not user:
-            raise HTTPException(status_code=400, detail="User not found")
-        
+        # Verify user is super admin
+        user = res.user
         metadata = user.user_metadata or {}
         
-        # Check if user is super admin
         if not metadata.get("is_super_admin"):
             raise HTTPException(status_code=403, detail="Not a super admin")
         
-        # Generate a session token for super admin
-        session = supabase_admin.auth.admin.create_session(user_id=user.id)
-        if not session or not session.session:
-            raise HTTPException(status_code=400, detail="Failed to create session")
-        
-        return {"token": session.session.access_token, "message": "Super admin login successful"}
+        return {"token": res.session.access_token, "message": "Super admin login successful"}
     except HTTPException:
         raise
     except Exception as e:
