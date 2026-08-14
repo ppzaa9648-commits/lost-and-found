@@ -44,6 +44,20 @@ def _ensure_user_metadata(user_id: str, defaults: dict):
 # Helper: safe user token authentication
 # -------------------------------------------------
 def _get_user_from_token(token: str):
+    # Check if it's a super admin PIN token
+    if token.startswith("super_admin_pin_token_"):
+        # Create a fake user object for super admin
+        class FakeSuperAdminUser:
+            def __init__(self):
+                self.id = "superadmin"
+                self.email = "superadmin@admin.local"
+                self.user_metadata = {
+                    "is_admin": True,
+                    "is_super_admin": True,
+                    "full_name": "Super Admin"
+                }
+        return FakeSuperAdminUser()
+    
     supabase = get_supabase()
     try:
         user_resp = supabase.auth.get_user(token)
@@ -404,6 +418,19 @@ def get_me(request: Request):
         raise HTTPException(status_code=401, detail="Unauthorized")
     
     token = auth_header.split(" ")[1]
+    
+    # Check if it's a super admin PIN token
+    if token.startswith("super_admin_pin_token_"):
+        return {
+            "id": "superadmin",
+            "email": "superadmin@admin.local",
+            "full_name": "Super Admin",
+            "avatar_url": "",
+            "line_social_id": "",
+            "is_admin": True,
+            "is_super_admin": True
+        }
+    
     supabase = get_supabase()
     
     try:
