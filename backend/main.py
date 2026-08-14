@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Body
+from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Body, Header
 from fastapi.middleware.cors import CORSMiddleware
 from database import get_supabase
 from models import UserRegister, UserLogin, PostCreate, PostUpdate, MessageCreate
@@ -9,8 +9,14 @@ import urllib.parse
 import boto3
 from botocore.config import Config
 from fastapi.responses import RedirectResponse
-from linebot import LineBotApi
-from linebot.models import TextSendMessage, ImageSendMessage, FlexSendMessage
+from datetime import datetime, timedelta
+from linebot import LineBotApi, WebhookHandler
+from linebot.exceptions import InvalidSignatureError
+from linebot.models import (
+    MessageEvent, TextMessage, TextSendMessage, ImageSendMessage, FlexSendMessage,
+    QuickReply, QuickReplyButton, MessageAction
+)
+
 
 # -------------------------------------------------
 # Helper: ensure user metadata exists (called after login/registration)
@@ -90,6 +96,11 @@ FRONTEND_BASE_URL = os.getenv("FRONTEND_BASE_URL", "http://127.0.0.1:5500/fronte
 line_bot_api = None
 if LINE_CHANNEL_ACCESS_TOKEN and LINE_CHANNEL_ACCESS_TOKEN != "YOUR_LINE_CHANNEL_ACCESS_TOKEN":
     line_bot_api = LineBotApi(LINE_CHANNEL_ACCESS_TOKEN)
+
+handler = None
+if LINE_CHANNEL_SECRET and LINE_CHANNEL_SECRET != "YOUR_LINE_CHANNEL_SECRET":
+    handler = WebhookHandler(LINE_CHANNEL_SECRET)
+
 
 # --- CLOUDFLARE R2 SETUP ---
 R2_ACCOUNT_ID = os.getenv("R2_ACCOUNT_ID")
@@ -197,7 +208,38 @@ async def callback_line(code: str, state: str = None):
                     # Now sign in normally
                     res = supabase.auth.sign_in_with_password({"email": email, "password": password})
                 except Exception as e:
-                    raise HTTPException(status_code=400, detail=f"Admin create user failed: {str(e)}")
+                    error_msg = str(e)
+                    if "already been registered" in error_msg or "already exists" in error_msg:
+                        try:
+                            users = supabase_admin.auth.admin.list_users(per_page=1000)
+                            existing_user = None
+                            for u in users:
+                                if u.email == email:
+                                    existing_user = u
+                                    break
+                            if existing_user:
+                                supabase_admin.auth.admin.update_user_by_id(
+                                    existing_user.id,
+                                    {
+                                        "password": password,
+                                        "email_confirm": True,
+                                        "user_metadata": {
+                                            "full_name": display_name,
+                                            "avatar_url": picture_url,
+                                            "line_user_id": user_id
+                                        }
+                                    }
+                                )
+                                # Now sign in normally
+                                res = supabase.auth.sign_in_with_password({"email": email, "password": password})
+                            else:
+                                raise HTTPException(status_code=400, detail=f"User already registered but not found in user list: {error_msg}")
+                        except HTTPException:
+                            raise
+                        except Exception as inner_e:
+                            raise HTTPException(status_code=400, detail=f"Failed to handle existing user: {str(inner_e)}")
+                    else:
+                        raise HTTPException(status_code=400, detail=f"Admin create user failed: {error_msg}")
             else:
                 try:
                     res = supabase.auth.sign_up({
@@ -988,6 +1030,386 @@ def admin_update_status(post_id: str, request: Request, status: str = Body(..., 
         raise HTTPException(status_code=404, detail="Post not found or could not update")
     return {"message": "Post status updated successfully", "data": response.data[0]}
 
+# -------------------------------------------------
+# LINE OA Webhook & Chatbot Flow (AI Search Assistant)
+# -------------------------------------------------
+
+CATEGORY_QUICK_REPLIES = QuickReply(items=[
+    QuickReplyButton(action=MessageAction(label="เครื่องใช้ไฟฟ้า", text="เครื่องใช้ไฟฟ้า")),
+    QuickReplyButton(action=MessageAction(label="กระเป๋า", text="กระเป๋า")),
+    QuickReplyButton(action=MessageAction(label="เอกสาร", text="เอกสาร")),
+    QuickReplyButton(action=MessageAction(label="อุปกรณ์ไอที", text="อุปกรณ์ไอที")),
+    QuickReplyButton(action=MessageAction(label="กุญแจ/บัตร", text="กุญแจ/บัตร")),
+])
+
+DATE_QUICK_REPLIES = QuickReply(items=[
+    QuickReplyButton(action=MessageAction(label="วันนี้", text="วันนี้")),
+    QuickReplyButton(action=MessageAction(label="เมื่อวานนี้", text="เมื่อวานนี้")),
+    QuickReplyButton(action=MessageAction(label="2 วันก่อน", text="2 วันก่อน")),
+])
+
+def _create_search_result_bubble(item: dict) -> dict:
+    title = item.get("title") or "ไม่ระบุ"
+    location = item.get("location") or "ไม่ระบุ"
+    img_urls = item.get("image_url", "").split(",") if item.get("image_url") else []
+    img_urls = [u for u in img_urls if u]
+    if not img_urls:
+        img_urls = ["https://via.placeholder.com/400x300?text=No+Image"]
+    
+    match_score = item.get("match_score", 0)
+    # แสดงสีตามความถูกต้องเหมาะสม
+    if match_score >= 80:
+        score_color = "#22c55e" # สีเขียว
+    elif match_score >= 50:
+        score_color = "#eab308" # สีเหลือง
+    else:
+        score_color = "#ef4444" # สีแดง
+        
+    post_url = f"{FRONTEND_BASE_URL}/post-detail.html?id={item.get('id')}"
+    
+    date_str = item.get("lost_found_date") or "ไม่ระบุ"
+    if "T" in date_str:
+        date_str = date_str.split("T")[0]
+        
+    bubble = {
+        "type": "bubble",
+        "header": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": f"🎯 ความตรงกัน {match_score}%",
+                    "weight": "bold",
+                    "color": "#ffffff",
+                    "size": "md"
+                }
+            ],
+            "backgroundColor": score_color
+        },
+        "hero": {
+            "type": "image",
+            "url": img_urls[0],
+            "size": "full",
+            "aspectRatio": "20:13",
+            "aspectMode": "cover"
+        },
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": title,
+                    "weight": "bold",
+                    "size": "lg",
+                    "wrap": True
+                },
+                {
+                    "type": "box",
+                    "layout": "vertical",
+                    "margin": "md",
+                    "spacing": "xs",
+                    "contents": [
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {
+                                    "type": "text",
+                                    "text": "หมวดหมู่",
+                                    "color": "#aaaaaa",
+                                    "size": "sm",
+                                    "flex": 2
+                                },
+                                {
+                                    "type": "text",
+                                    "text": item.get("category") or "ไม่ระบุ",
+                                    "wrap": True,
+                                    "color": "#666666",
+                                    "size": "sm",
+                                    "flex": 5
+                                }
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {
+                                    "type": "text",
+                                    "text": "สถานที่",
+                                    "color": "#aaaaaa",
+                                    "size": "sm",
+                                    "flex": 2
+                                },
+                                {
+                                    "type": "text",
+                                    "text": location,
+                                    "wrap": True,
+                                    "color": "#666666",
+                                    "size": "sm",
+                                    "flex": 5
+                                }
+                            ]
+                        },
+                        {
+                            "type": "box",
+                            "layout": "baseline",
+                            "spacing": "sm",
+                            "contents": [
+                                {
+                                    "type": "text",
+                                    "text": "วันที่",
+                                    "color": "#aaaaaa",
+                                    "size": "sm",
+                                    "flex": 2
+                                },
+                                {
+                                    "type": "text",
+                                    "text": date_str,
+                                    "wrap": True,
+                                    "color": "#666666",
+                                    "size": "sm",
+                                    "flex": 5
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        "footer": {
+            "type": "box",
+            "layout": "vertical",
+            "spacing": "sm",
+            "contents": [
+                {
+                    "type": "button",
+                    "style": "primary",
+                    "height": "sm",
+                    "action": {
+                        "type": "uri",
+                        "label": "ดูรายละเอียด",
+                        "uri": post_url
+                    },
+                    "color": "#ea580c"
+                }
+            ]
+        }
+    }
+    return bubble
+
+@app.post("/line/webhook")
+async def line_webhook(request: Request, x_line_signature: str = Header(None)):
+    if not handler:
+        raise HTTPException(status_code=500, detail="LINE Webhook handler not configured in .env")
+    
+    body = await request.body()
+    try:
+        handler.handle(body.decode("utf-8"), x_line_signature)
+    except InvalidSignatureError:
+        raise HTTPException(status_code=400, detail="Invalid signature")
+    return "OK"
+
+@handler.add(MessageEvent, message=TextMessage)
+def handle_line_message(event):
+    if not line_bot_api:
+        return
+        
+    line_user_id = event.source.user_id
+    user_message = event.message.text.strip()
+    
+    supabase = get_supabase()
+    
+    # คำสั่งยกเลิก/เริ่มใหม่
+    if user_message in ["ยกเลิก", "เริ่มใหม่", "ออก"]:
+        try:
+            supabase.table("line_chat_states").update({
+                "state": "IDLE",
+                "category": None,
+                "description": None,
+                "lost_date": None,
+                "updated_at": datetime.utcnow().isoformat()
+            }).eq("line_user_id", line_user_id).execute()
+        except Exception:
+            pass
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(text="❌ ยกเลิกขั้นตอนการค้นหาปัจจุบันแล้วครับ พิมพ์ \"ค้นหาของหาย\" เพื่อเริ่มต้นใหม่อีกครั้ง")
+        )
+        return
+
+    # 1. ตรวจสอบสถานะการคุย
+    try:
+        state_res = supabase.table("line_chat_states").select("*").eq("line_user_id", line_user_id).execute()
+        state_data = state_res.data[0] if state_res.data else None
+    except Exception as db_err:
+        print("LINE Webhook Database Error:", db_err)
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(
+                text="⚠️ ระบบค้นหาด้วย AI ขัดข้องชั่วคราว เนื่องจากยังไม่ได้สร้างตาราง 'line_chat_states' ใน Supabase ของคุณ โปรดรันคำสั่ง SQL ที่บอทให้ไว้ในคู่มือเพื่อเปิดใช้งานระบบนี้นะครับ"
+            )
+        )
+        return
+
+    # คำสั่งเริ่มต้นหาของหาย
+    if user_message == "ค้นหาของหาย" or user_message.lower() == "/search":
+        supabase.table("line_chat_states").upsert({
+            "line_user_id": line_user_id,
+            "state": "AWAITING_CATEGORY",
+            "category": None,
+            "description": None,
+            "lost_date": None,
+            "updated_at": datetime.utcnow().isoformat()
+        }).execute()
+        
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(
+                text="🤖 สวัสดีครับ! ยินดีต้อนรับสู่ระบบช่วยตามหาของหาย AI\n\nขั้นตอนที่ 1: โปรดระบุ **หมวดหมู่** ของสิ่งของที่คุณทำหาย (เลือกจากปุ่มด้านล่าง หรือพิมพ์บอกได้เลยครับ):",
+                quick_reply=CATEGORY_QUICK_REPLIES
+            )
+        )
+        return
+
+    if not state_data or state_data.get("state") == "IDLE":
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(
+                text="สวัสดีครับ! ต้องการค้นหาของหายในระบบด้วย AI ใช่ไหมครับ? 😊\n\nพิมพ์ข้อความว่า \"ค้นหาของหาย\" เพื่อเริ่มขั้นตอนนำการกรอกข้อมูลและค้นหาได้ทันทีเลยครับ"
+            )
+        )
+        return
+
+    current_state = state_data.get("state")
+
+    # ขั้นตอน 1: รอรับหมวดหมู่ -> ถามรายละเอียด
+    if current_state == "AWAITING_CATEGORY":
+        supabase.table("line_chat_states").update({
+            "category": user_message,
+            "state": "AWAITING_DESCRIPTION",
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("line_user_id", line_user_id).execute()
+        
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(
+                text=f"รับทราบครับ หมวดหมู่คือ: {user_message}\n\nขั้นตอนที่ 2: กรุณากรอก **รายละเอียด/ลักษณะพิเศษ** ของสิ่งของที่หาย (เช่น ยี่ห้อ, สี, ของตกแต่ง หรือชื่อบนสิ่งของ)"
+            )
+        )
+        return
+
+    # ขั้นตอน 2: รอรับรายละเอียด -> ถามวันที่
+    elif current_state == "AWAITING_DESCRIPTION":
+        supabase.table("line_chat_states").update({
+            "description": user_message,
+            "state": "AWAITING_DATE",
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("line_user_id", line_user_id).execute()
+        
+        line_bot_api.reply_message(
+            event.reply_token,
+            TextSendMessage(
+                text="บันทึกรายละเอียดของเรียบร้อยครับ\n\nขั้นตอนที่ 3: ระบุ **วันที่สิ่งของสูญหาย** (สามารถคลิกเลือกปุ่มด้านล่าง หรือพิมพ์ระบุปี-เดือน-วัน ค.ศ. เช่น 2026-08-14)",
+                quick_reply=DATE_QUICK_REPLIES
+            )
+        )
+        return
+
+    # ขั้นตอน 3: รอรับวันที่ -> ประมวลผลและส่งผลลัพธ์จับคู่
+    elif current_state == "AWAITING_DATE":
+        today = datetime.utcnow()
+        lost_date_str = today.strftime("%Y-%m-%d")
+        
+        if user_message == "วันนี้":
+            lost_date_str = today.strftime("%Y-%m-%d")
+        elif user_message == "เมื่อวานนี้":
+            lost_date_str = (today - timedelta(days=1)).strftime("%Y-%m-%d")
+        elif user_message == "2 วันก่อน":
+            lost_date_str = (today - timedelta(days=2)).strftime("%Y-%m-%d")
+        else:
+            try:
+                cleaned_date = user_message.replace("/", "-").strip()
+                parsed_date = datetime.strptime(cleaned_date, "%Y-%m-%d")
+                lost_date_str = parsed_date.strftime("%Y-%m-%d")
+            except ValueError:
+                lost_date_str = user_message
+
+        category = state_data.get("category")
+        description = state_data.get("description")
+
+        # สร้าง Dictionary จำลองขึ้นมาเปรียบเทียบในฟังก์ชัน calculate_match_score
+        new_post = {
+            "category": category,
+            "title": description[:30], # ดึงส่วนหัวสั้นๆ
+            "description": description,
+            "location": "", # ละเว้นสถานที่ถ้าพิมพ์ไม่ครอบคลุม
+            "lost_found_date": lost_date_str,
+            "type": "lost"
+        }
+
+        try:
+            # ดึงโพสต์ประเภท 'found' (ของที่เก็บได้) ทั้งหมดที่สถานะไม่ใช่ claimed
+            candidates_res = supabase.table("posts").select("*").eq("type", "found").neq("status", "claimed").execute()
+            candidates = candidates_res.data or []
+            
+            scored_candidates = []
+            for cand in candidates:
+                match_info = calculate_match_score(new_post, cand)
+                cand_copy = dict(cand)
+                cand_copy["match_score"] = match_info["score"]
+                scored_candidates.append(cand_copy)
+                
+            # จัดเรียงจากตรงกันมากสุด
+            scored_candidates.sort(key=lambda x: x["match_score"], reverse=True)
+            
+            # กรองเอาที่มีความแมทช์ตั้งแต่ 30% ขึ้นไป (แสดงผลสูงสุด 6 รายการ)
+            top_matches = [c for c in scored_candidates if c["match_score"] >= 30][:6]
+
+            if top_matches:
+                bubbles = []
+                for item in top_matches:
+                    bubbles.append(_create_search_result_bubble(item))
+                
+                flex_carousel = {
+                    "type": "carousel",
+                    "contents": bubbles
+                }
+                
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    [
+                        TextSendMessage(text=f"🔍 AI ช่วยเปรียบเทียบข้อมูลแล้ว พบรายการของเก็บได้ที่ใกล้เคียงทั้งหมด {len(top_matches)} รายการ:"),
+                        FlexSendMessage(alt_text="ผลการค้นหาของหายด้วย AI", contents=flex_carousel)
+                    ]
+                )
+            else:
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text="❌ ขออภัยด้วยครับ ขณะนี้ระบบยังไม่มีประกาศของพบเจอ (Found) ที่มีลักษณะหรือหมวดหมู่ตรงกับข้อมูลที่คุณระบุเข้ามาเลย\n\nอย่างไรก็ดี ข้อมูลการตามหานี้ถูกบันทึกในประวัติแล้ว หากมีผู้มาอัปโหลดของที่พบเข้าคู่กันในอนาคต ระบบจะแจ้งเตือนให้คุณทราบครับ")
+                )
+        except Exception as e:
+            print("Error matching posts on webhook:", e)
+            line_bot_api.reply_message(
+                event.reply_token,
+                TextSendMessage(text="เกิดข้อผิดพลาดขึ้นในระหว่างเข้าถึงข้อมูล ขอภัยในความไม่สะดวกครับ")
+            )
+
+        # รีเซ็ต State กลับสู่ว่างเปล่า (IDLE)
+        supabase.table("line_chat_states").update({
+            "state": "IDLE",
+            "category": None,
+            "description": None,
+            "lost_date": None,
+            "updated_at": datetime.utcnow().isoformat()
+        }).eq("line_user_id", line_user_id).execute()
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+
+
