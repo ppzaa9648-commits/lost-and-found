@@ -378,30 +378,23 @@ def login(user: UserLogin):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# --- SUPER ADMIN LOGIN (with simple password) ---
-@app.post("/auth/login/superadmin")
-def login_superadmin(data: SuperAdminLogin):
-    """Super admin login with email and simple password"""
-    supabase = get_supabase()
+# --- SUPER ADMIN LOGIN (PIN only) ---
+@app.post("/auth/login/pin")
+def login_pin(data: SuperAdminLogin):
+    """Super admin login with PIN only"""
+    # Valid PINs
+    valid_pins = ["adminayaya", "adminmoss", "adminpp"]
     
-    try:
-        # Try to login with email + password
-        res = supabase.auth.sign_in_with_password({"email": data.email, "password": data.password})
-        if not res.session:
-            raise HTTPException(status_code=400, detail="Invalid credentials")
-        
-        # Verify user is super admin
-        user = res.user
-        metadata = user.user_metadata or {}
-        
-        if not metadata.get("is_super_admin"):
-            raise HTTPException(status_code=403, detail="Not a super admin")
-        
-        return {"token": res.session.access_token, "message": "Super admin login successful"}
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Login failed: {str(e)}")
+    if data.password not in valid_pins:
+        raise HTTPException(status_code=403, detail="Invalid PIN")
+    
+    # Return a hardcoded token for super admin (or create one)
+    # For production, use proper token generation
+    return {
+        "token": "super_admin_pin_token_" + data.password,
+        "message": "Super admin login successful",
+        "user_id": "superadmin"
+    }
 
 # --- USERS ---
 @app.get("/users/me")
