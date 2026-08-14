@@ -57,7 +57,7 @@
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i data-lucide="mail" class="w-5 h-5 text-gray-400"></i>
                     </div>
-                    <input type="email" id="email" required
+                    <input type="email" id="email"
                         class="w-full pl-11 pr-4 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-900 font-medium focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all shadow-sm"
                         placeholder="you@example.com">
                 </div>
@@ -68,7 +68,7 @@
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i data-lucide="lock" class="w-5 h-5 text-gray-400"></i>
                     </div>
-                    <input type="password" id="password" required
+                    <input type="password" id="password"
                         class="w-full pl-11 pr-4 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-900 font-medium focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all shadow-sm"
                         placeholder="••••••••">
                 </div>
@@ -127,6 +127,9 @@
         const passwordField = document.getElementById('password-field');
         const pinField = document.getElementById('pin-field');
         const submitBtn = document.getElementById('submit-btn');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const pinInput = document.getElementById('pin');
 
         // Toggle between email/password and PIN
         superAdminCheckbox.addEventListener('change', (e) => {
@@ -135,12 +138,27 @@
                 emailField.style.display = 'none';
                 passwordField.style.display = 'none';
                 pinField.style.display = 'block';
+                
+                // Clear email/password and remove required attribute
+                emailInput.value = '';
+                passwordInput.value = '';
+                emailInput.removeAttribute('required');
+                passwordInput.removeAttribute('required');
+                pinInput.setAttribute('required', 'required');
+                
                 submitBtn.querySelector('span').textContent = 'Super Admin Login (PIN)';
             } else {
                 // Show email/password, hide PIN
                 emailField.style.display = 'block';
                 passwordField.style.display = 'block';
                 pinField.style.display = 'none';
+                
+                // Clear PIN and remove required attribute
+                pinInput.value = '';
+                pinInput.removeAttribute('required');
+                emailInput.setAttribute('required', 'required');
+                passwordInput.setAttribute('required', 'required');
+                
                 submitBtn.querySelector('span').textContent = 'เข้าสู่ระบบด้วย Email';
             }
         });
@@ -158,6 +176,8 @@
                 if (isSuperAdmin) {
                     // Super admin login with PIN
                     const pin = document.getElementById('pin').value;
+                    if (!pin) throw new Error('กรุณาใส่ PIN');
+                    
                     const response = await fetch(`${API_BASE_URL}/auth/login/pin`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -176,6 +196,8 @@
                     // Normal email + password login
                     const email = document.getElementById('email').value;
                     const password = document.getElementById('password').value;
+                    if (!email || !password) throw new Error('กรุณาใส่อีเมลและรหัสผ่าน');
+                    
                     await api.loginWithEmail(email, password);
                 }
             } catch (err) {
