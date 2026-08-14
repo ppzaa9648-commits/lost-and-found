@@ -382,7 +382,6 @@ def login(user: UserLogin):
 @app.post("/auth/login/superadmin")
 def login_superadmin(data: SuperAdminLogin):
     """Super admin login with ID only (no password required)"""
-    supabase = get_supabase()
     service_key = os.getenv("SUPABASE_SERVICE_KEY")
     
     if not service_key or service_key.upper() in ("YOUR_SUPABASE_SERVICE_KEY", "YOUR_SUPABASE_SERVICE_ROLE_KEY"):
@@ -392,12 +391,19 @@ def login_superadmin(data: SuperAdminLogin):
     supabase_admin = create_client(os.getenv("SUPABASE_URL"), service_key)
     
     try:
-        # Get user by email
-        user_resp = supabase_admin.auth.admin.get_user_by_email(data.email).execute()
-        if not user_resp or not user_resp.user:
+        # List all users and find by email
+        users_resp = supabase_admin.auth.admin.list_users().execute()
+        user = None
+        
+        if users_resp and hasattr(users_resp, 'users'):
+            for u in users_resp.users:
+                if u.email == data.email:
+                    user = u
+                    break
+        
+        if not user:
             raise HTTPException(status_code=400, detail="User not found")
         
-        user = user_resp.user
         metadata = user.user_metadata or {}
         
         # Check if user is super admin
