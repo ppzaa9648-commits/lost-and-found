@@ -189,16 +189,67 @@
             lucide.createIcons();
         }
 
-        async function actionPostStatus(pId, s) {
+        let __admin_pending_post = null;
+        let __admin_pending_status = null;
+
+        async function actionPostStatus(postId, newStatus) {
+            // ถ้าเป็นการเปลี่ยนสถานะเป็น claimed/เสร็จสิ้น ให้เปิด modal รอเหตุผล
+            if (newStatus === 'claimed' || newStatus === 'completed' || newStatus === 'เสร็จสิ้น') {
+                __admin_pending_post = postId;
+                __admin_pending_status = newStatus;
+                openReasonModal();
+                return;
+            }
+
+            // ปกติส่งได้เลย
+            await sendStatusUpdate(postId, newStatus, null);
+        }
+
+        function openReasonModal() {
+            document.getElementById('reason-modal').classList.remove('hidden');
+            document.getElementById('completion-reason').value = '';
+            document.getElementById('completion-reason').focus();
+        }
+
+        function closeReasonModal() {
+            document.getElementById('reason-modal').classList.add('hidden');
+            __admin_pending_post = null;
+            __admin_pending_status = null;
+        }
+
+        async function confirmReasonModal() {
+            const reason = document.getElementById('completion-reason').value.trim();
+            if (!reason) {
+                alert('กรุณาระบุเหตุผลก่อนยืนยัน');
+                return;
+            }
+            if (!__admin_pending_post || !__admin_pending_status) {
+                closeReasonModal();
+                return;
+            }
+            await sendStatusUpdate(__admin_pending_post, __admin_pending_status, reason);
+            closeReasonModal();
+        }
+
+        async function sendStatusUpdate(postId, status, completionReason) {
             try {
-                const r = await fetch(`${API_URL}/admin/posts/${pId}/status`, {
+                const response = await fetch(`${API_URL}/admin/posts/${postId}/status`, {
                     method: 'PUT',
                     headers: getAdminHeaders(),
-                    body: JSON.stringify({ status: s })
+                    body: JSON.stringify({ status: status, completion_reason: completionReason })
                 });
-                if (r.ok) { showToast('อัปเดตสถานะสำเร็จ'); loadPosts(); }
-                else { showToast('ไม่สามารถอัปเดตสถานะได้'); loadPosts(); }
-            } catch (err) { showToast('เกิดข้อผิดพลาดในการอัปเดตโพสต์'); }
+
+                if (response.ok) {
+                    alert('อัปเดตสถานะสำเร็จ!');
+                    loadPosts();
+                } else {
+                    const err = await response.json().catch(() => ({}));
+                    alert('เกิดข้อผิดพลาด: ' + (err.detail || 'ไม่สามารถอัปเดตได้'));
+                }
+            } catch (e) {
+                console.error('Error updating status:', e);
+                alert('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+            }
         }
 
         async function actionDeletePost(pId) {

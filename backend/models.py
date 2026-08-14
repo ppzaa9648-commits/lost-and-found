@@ -27,7 +27,8 @@ class PostUpdate(BaseModel):
     description: Optional[str] = None
     category: Optional[str] = None
     location: Optional[str] = None
-    status: Optional[str] = None # 'pending', 'published', 'claimed'
+    status: Optional[str] = None
+    reason: Optional[str] = None
 
 class MessageCreate(BaseModel):
     receiver_id: str

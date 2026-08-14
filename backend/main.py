@@ -3,6 +3,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, Body, Header
+from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from database import get_supabase
 from models import UserRegister, UserLogin, PostCreate, PostUpdate, MessageCreate
@@ -89,6 +90,66 @@ def _get_supabase_admin():
         raise HTTPException(status_code=503, detail="Service key not configured")
     from supabase import create_client
     return create_client(os.getenv("SUPABASE_URL"), service_key)
+
+app = FastAPI()
+# --- ADMIN ENDPOINTS ---
+@app.put("/admin/posts/{post_id}/status")
+def admin_update_status(
+    post_id: str,
+    request: Request,
+    status: str = Body(..., embed=True),
+    completion_reason: Optional[str] = Body(None, embed=True)
+):
+    """
+    ฟังก์ชันสำหรับ Admin อัปเดตสถานะประกาศ
+    รองรับการบันทึก completion_reason (หมายเหตุ) ลงใน Supabase
+    """
+    auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    token = auth_header.split(" ")[1]
+
+    supabase = get_supabase()
+    user = _get_user_from_token(token)
+
+    metadata = user.user_metadata or {}
+    is_admin = metadata.get("is_admin", False)
+    is_super = metadata.get("is_super_admin", False)
+    if not is_admin and not is_super:
+        raise HTTPException(status_code=403, detail="Admin privileges required")
+
+    allowed_statuses = {"pending", "published", "claimed"}
+    if status not in allowed_statuses:
+        raise HTTPException(status_code=400, detail="Invalid status value")
+
+    supabase_admin = _get_supabase_admin()
+    admin_name = metadata.get("full_name") or metadata.get("name") or "Admin"
+
+    # จัดเตรียมข้อมูลที่จะอัปเดตลงตาราง posts
+    update_payload = {
+        "status": status,
+        "status_by_name": admin_name
+    }
+    
+    # ถ้ามีการส่งหมายเหตุมา ให้เพิ่มคอลัมน์ completion_reason เข้าไปด้วย
+    if completion_reason is not None:
+        update_payload["completion_reason"] = completion_reason
+
+    try:
+        response = supabase_admin.table("posts").update(update_payload).eq("id", post_id).execute()
+    except Exception as e:
+        # Fallback กรณีตารางไม่มีคอลัมน์ status_by_name
+        fallback_payload = {"status": status}
+        if completion_reason is not None:
+            fallback_payload["completion_reason"] = completion_reason
+            
+        response = supabase_admin.table("posts").update(fallback_payload).eq("id", post_id).execute()
+        print(f"Fallback without status_by_name: {e}")
+
+    if not response.data:
+        raise HTTPException(status_code=404, detail="Post not found or could not update")
+        
+    return {"message": "Post status updated successfully", "data": response.data[0]}
 
 LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
 LINE_CLIENT_ID = os.getenv("LINE_CLIENT_ID", "")
@@ -525,7 +586,7 @@ def create_post(post: PostCreate, request: Request):
                                             "layout": "baseline",
                                             "spacing": "sm",
                                             "contents": [
-                                                {
+                                                    {
                                                     "type": "text",
                                                     "text": "สถานที่",
                                                     "color": "#aaaaaa",
@@ -868,7 +929,7 @@ async def upload_image(file: UploadFile = File(...)):
     if not r2_client:
         # Fallback to Supabase if R2 is not configured
         supabase = get_supabase()
-        file_bytes = await file.read()
+        file_bytes = await file.read()  
         unique_filename = f"{uuid.uuid4()}_{file.filename}"
         file_path = f"post_images/{unique_filename}"
         try:

@@ -498,29 +498,61 @@ async function ownerUpdateStatus(newStatus) {
         return;
     }
 
-    const confirmed = await window.ayayaConfirm(`ต้องการเปลี่ยนสถานะเป็น "${newStatus === 'pending' ? 'รอประกาศ' : (newStatus === 'published' ? 'ประกาศแล้ว' : 'เสร็จสิ้น')}" ใช่หรือไม่?`);
-    if (!confirmed) {
-        return;
+    // ถ้าเลือก "เสร็จสิ้น" ให้กรอกเหตุผลก่อน
+    let reason = '';
+
+    if (newStatus === 'claimed') {
+        reason = window.prompt('เสร็จสิ้นเพราะอะไร?');
+
+        // กด Cancel
+        if (reason === null) {
+            return;
+        }
+
+        reason = reason.trim();
+
+        if (!reason) {
+            window.ayayaAlert('กรุณาระบุเหตุผลก่อนครับ', 'warning');
+            return;
+        }
     }
 
+    const statusText = 
+        newStatus === 'pending'
+        ? 'รอประกาศ'
+        : (newStatus === 'claimed' ? 'เสร็จสิ้น' : 'ประกาศแล้ว');
+
     try {
-        const response = await fetch(`${API_BASE_URL}/posts/${postId}`, {
+        const response = await fetch(`${API_URL}/admin/posts/${postId}/status`, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
             },
-            body: JSON.stringify({ status: newStatus })
+            body: JSON.stringify({
+                status: newStatus,
+                completion_reason: reason || null
+            })
         });
 
-        if (response.ok) {
-            window.ayayaAlert('อัปเดตสถานะสำเร็จ!', 'success', () => location.reload());
-        } else {
-            const err = await response.json();
-            window.ayayaAlert('อัปเดตไม่สำเร็จ: ' + (err.detail || 'ไม่ทราบสาเหตุ'), 'error');
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || 'อัปเดตสถานะไม่สำเร็จ');
         }
-    } catch (e) {
-        window.ayayaAlert('เกิดข้อผิดพลาด: ' + e.message, 'error');
+
+        window.ayayaAlert(`เปลี่ยนสถานะเป็น "${statusText}" เรียบร้อยแล้ว`, 'success');
+        
+        // โหลดข้อมูลหน้าใหม่เพื่ออัปเดตสถานะล่าสุด
+        if (typeof loadPostDetail === 'function') {
+            loadPostDetail();
+        } else {
+            location.reload();
+        }
+
+    } catch (err) {
+        console.error(err);
+        window.ayayaAlert(err.message || 'เกิดข้อผิดพลาดในการเปลี่ยนสถานะ', 'error');
     }
 }
 
