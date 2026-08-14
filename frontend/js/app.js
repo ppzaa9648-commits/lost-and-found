@@ -723,6 +723,14 @@ async function checkFirstLogin() {
         if (!resp.ok) return;
         const user = await resp.json();
 
+        // If super admin, skip LINE ID setup and go to admin page
+        if (user && user.is_super_admin) {
+            setTimeout(() => {
+                window.location.href = 'admin/posts.html';
+            }, 500);
+            return;
+        }
+
         if (!user.line_social_id) {
             // Show the mandatory LINE ID modal
             const modal = document.getElementById('first-login-modal');
