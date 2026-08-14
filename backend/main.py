@@ -120,7 +120,8 @@ if all([R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY]) and R2_ACCOUNT_I
         region_name="auto"
     )
 
-app = FastAPI(title="Lost and Found API")
+root_path = "/api" if os.getenv("VERCEL") else ""
+app = FastAPI(title="Lost and Found API", root_path=root_path)
 
 app.add_middleware(
     CORSMiddleware,
