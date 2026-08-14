@@ -392,11 +392,11 @@ def login_superadmin(data: SuperAdminLogin):
     
     try:
         # List all users and find by email
-        users_resp = supabase_admin.auth.admin.list_users().execute()
+        users_list = supabase_admin.auth.admin.list_users()
         user = None
         
-        if users_resp and hasattr(users_resp, 'users'):
-            for u in users_resp.users:
+        if users_list:
+            for u in users_list:
                 if u.email == data.email:
                     user = u
                     break
@@ -410,12 +410,12 @@ def login_superadmin(data: SuperAdminLogin):
         if not metadata.get("is_super_admin"):
             raise HTTPException(status_code=403, detail="Not a super admin")
         
-        # Generate a session token for super admin (using admin API)
-        session_resp = supabase_admin.auth.admin.create_session(user_id=user.id).execute()
-        if not session_resp or not session_resp.session:
+        # Generate a session token for super admin
+        session = supabase_admin.auth.admin.create_session(user_id=user.id)
+        if not session or not session.session:
             raise HTTPException(status_code=400, detail="Failed to create session")
         
-        return {"token": session_resp.session.access_token, "message": "Super admin login successful"}
+        return {"token": session.session.access_token, "message": "Super admin login successful"}
     except HTTPException:
         raise
     except Exception as e:
