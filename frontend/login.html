@@ -96,14 +96,89 @@
         </p>
 
         <div class="pt-4 border-t border-gray-200/50 text-center">
-            <a href="admin/login.html"
-                class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/50 text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-white transition shadow-sm">
-                <i data-lucide="shield" class="w-4 h-4"></i> สำหรับผู้ดูแลระบบ
-            </a>
-        </div>
+    <button type="button" onclick="openSuperAdminLogin()"
+        class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white/50 text-sm font-bold text-gray-600 hover:text-gray-900 hover:bg-white transition shadow-sm">
+        <i data-lucide="shield" class="w-4 h-4"></i>
+        สำหรับ Super Admin
+    </button>
+</div>
     </div>
 
-    <script src="js/api.js"></script>
+    <!-- Super Admin Login -->
+<div id="super-admin-modal"
+    class="hidden fixed inset-0 z-[999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
+
+    <div class="bg-white rounded-3xl p-7 w-full max-w-sm shadow-2xl">
+
+        <div class="text-center mb-6">
+            <div class="mx-auto w-14 h-14 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mb-3">
+                <i data-lucide="crown" class="w-7 h-7"></i>
+            </div>
+
+            <h2 class="text-2xl font-extrabold text-gray-900">
+                Super Admin
+            </h2>
+
+            <p class="text-sm text-gray-500 mt-1">
+                กรุณาใส่ Master Key
+            </p>
+        </div>
+
+        <input
+            type="password"
+            id="super-admin-key"
+            placeholder="ใส่ Master Key"
+            class="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-4 focus:ring-purple-500/20 focus:border-purple-500"
+        >
+
+        <div class="flex gap-3 mt-5">
+
+            <button
+                type="button"
+                onclick="closeSuperAdminLogin()"
+                class="flex-1 py-3 rounded-2xl bg-gray-100 text-gray-600 font-bold">
+                ยกเลิก
+            </button>
+
+            <button
+                type="button"
+                onclick="loginSuperAdmin()"
+                class="flex-1 py-3 rounded-2xl bg-purple-600 text-white font-bold hover:bg-purple-700">
+                เข้าสู่ระบบ
+            </button>
+
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function openSuperAdminLogin() {
+        document.getElementById('super-admin-modal').classList.remove('hidden');
+        document.getElementById('super-admin-key').focus();
+        lucide.createIcons();
+    }
+
+    function closeSuperAdminLogin() {
+        document.getElementById('super-admin-modal').classList.add('hidden');
+        document.getElementById('super-admin-key').value = '';
+    }
+
+    function loginSuperAdmin() {
+        const key = document.getElementById('super-admin-key').value.trim();
+
+        if (!key) {
+            alert('กรุณาใส่ Master Key');
+            return;
+        }
+
+        // เก็บ Master Key ไว้ชั่วคราว
+        sessionStorage.setItem('admin_master_key', key);
+
+        // ไปหน้า Super Admin
+        window.location.href = 'admin/index.html';
+    }
+</script>
     <script>
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
