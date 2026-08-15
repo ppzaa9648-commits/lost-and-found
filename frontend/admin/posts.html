@@ -32,28 +32,6 @@
         }
         .animate-fade-in { animation: fadeIn 0.3s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .animate-spin-slow { animation: spin-slow 20s linear infinite; }
-        
-        .stat-card {
-            position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
-        }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
-            background-size: 50px 50px;
-        }
-        .stat-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-        }
     </style>
 </head>
 
@@ -80,67 +58,32 @@
     <main class="max-w-[1600px] mx-auto px-6 py-8">
         <!-- Stats Row -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <!-- Total Posts Card -->
-            <div class="stat-card bg-gradient-to-br from-blue-50 to-blue-100 rounded-3xl p-6 border border-blue-200">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <h3 class="text-blue-600 text-xs font-bold uppercase tracking-widest mb-2">จำนวนประกาศทั้งหมด</h3>
-                        <p id="stat-posts" class="text-5xl font-black text-blue-900">0</p>
-                        <p class="text-xs text-blue-700 font-medium mt-2">ประกาศทั้งหมดในระบบ</p>
-                    </div>
-                    <div class="w-16 h-16 bg-blue-400/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="file-text" class="w-8 h-8 text-blue-600"></i>
-                    </div>
-                </div>
+            <div class="glass-card p-6 rounded-3xl shadow-sm">
+                <h3 class="text-slate-500 text-xs font-bold uppercase tracking-wider">จำนวนประกาศทั้งหมด</h3>
+                <p id="stat-posts" class="text-3xl font-extrabold mt-1">0</p>
             </div>
-
-            <!-- Pending Posts Card -->
-            <div class="stat-card bg-gradient-to-br from-amber-50 to-amber-100 rounded-3xl p-6 border border-amber-200">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <h3 class="text-amber-600 text-xs font-bold uppercase tracking-widest mb-2">รอการอนุมัติ</h3>
-                        <p id="stat-pending" class="text-5xl font-black text-amber-900">0</p>
-                        <p class="text-xs text-amber-700 font-medium mt-2">ต้องตรวจสอบเพิ่มเติม</p>
-                    </div>
-                    <div class="w-16 h-16 bg-amber-400/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="clock" class="w-8 h-8 text-amber-600"></i>
-                    </div>
-                </div>
+            <div class="glass-card p-6 rounded-3xl shadow-sm border-l-4 border-amber-500">
+                <h3 class="text-slate-500 text-xs font-bold uppercase tracking-wider">รอการอนุมัติ</h3>
+                <p id="stat-pending" class="text-3xl font-extrabold mt-1 text-amber-600">0</p>
             </div>
-
-            <!-- System Status Card -->
-            <div class="stat-card bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-3xl p-6 border border-emerald-200">
-                <div class="flex items-start justify-between">
-                    <div class="flex-1">
-                        <h3 class="text-emerald-600 text-xs font-bold uppercase tracking-widest mb-2">สถานะระบบ</h3>
-                        <div class="flex items-center gap-2 mt-1">
-                            <div class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
-                            <p class="text-2xl font-black text-emerald-900">ออนไลน์</p>
-                        </div>
-                        <p class="text-xs text-emerald-700 font-medium mt-2">พร้อมใช้งาน</p>
-                    </div>
-                    <div class="w-16 h-16 bg-emerald-400/20 rounded-2xl flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="check-circle" class="w-8 h-8 text-emerald-600"></i>
-                    </div>
-                </div>
+            <div class="glass-card p-6 rounded-3xl shadow-sm bg-slate-900 text-white">
+                <h3 class="text-slate-400 text-xs font-bold uppercase tracking-wider">สถานะระบบ</h3>
+                <p class="text-xl font-bold mt-1 text-emerald-400">ออนไลน์</p>
             </div>
         </div>
 
         <!-- Section: Posts -->
         <section id="section-posts" class="animate-fade-in">
-            <div class="mb-6">
-                <h2 class="text-2xl font-black text-slate-900 mb-2">📋 จัดการประกาศทั้งหมด</h2>
-                <p class="text-sm text-slate-500">ตรวจสอบและจัดการสถานะของประกาศทั้งหมด</p>
-            </div>
-            <div class="bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-200 hover:shadow-md transition-shadow">
+            <h2 class="text-xl font-bold mb-4">จัดการประกาศทั้งหมด (Posts)</h2>
+            <div class="bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-200">
                 <table class="w-full text-left">
-                    <thead class="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+                    <thead class="bg-slate-50 border-b border-slate-200">
                         <tr>
-                            <th class="px-6 py-4 text-xs font-extrabold text-slate-700 uppercase tracking-wider">📝 เนื้อหา</th>
-                            <th class="px-6 py-4 text-xs font-extrabold text-slate-700 uppercase tracking-wider">👤 ผู้ลงประกาศ</th>
-                            <th class="px-6 py-4 text-xs font-extrabold text-slate-700 uppercase tracking-wider">🏷️ หมวดหมู่</th>
-                            <th class="px-6 py-4 text-xs font-extrabold text-slate-700 uppercase tracking-wider">✅ สถานะ</th>
-                            <th class="px-6 py-4 text-xs font-extrabold text-slate-700 uppercase tracking-wider text-right">⚙️ จัดการ</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">เนื้อหาประกาศ</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">ผู้ลงประกาศ</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">หมวดหมู่</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase">สถานะ</th>
+                            <th class="px-6 py-4 text-xs font-bold text-slate-500 uppercase text-right">จัดการ</th>
                         </tr>
                     </thead>
                     <tbody id="post-table-body" class="divide-y divide-slate-100">
@@ -225,19 +168,13 @@
                     return;
                 }
 
-                const meResp = await fetch(`${API_URL}/users/me`, {
-    headers: getAdminHeaders()
-});
+                const meResp = await fetch(`${API_URL}/users/me`, { headers: getAdminHeaders() });
+                if (meResp.status === 401 || meResp.status === 403) {
+                    alert('ปฏิเสธการเข้าถึง');
+                    window.location.href = '../index.html';
+                    return;
+                }
 
-console.log('ME STATUS:', meResp.status);
-
-if (meResp.status === 401 || meResp.status === 403) {
-    const errorData = await meResp.text();
-    console.log('ME ERROR:', errorData);
-
-    alert(`เข้าถึงไม่ได้: ${meResp.status}`);
-    return;
-}
                 const pResp = await fetch(`${API_URL}/posts`, { headers: getAdminHeaders() });
                 const pData = await pResp.json();
                 
@@ -257,53 +194,33 @@ if (meResp.status === 401 || meResp.status === 403) {
             const body = document.getElementById('post-table-body');
             body.innerHTML = posts.length ? '' : '<tr><td colspan="5" class="p-10 text-center text-slate-400">ไม่มีข้อมูลโพสต์</td></tr>';
 
-            const statusBadges = {
-                'pending': { bg: 'bg-amber-50', text: 'text-amber-700', label: '⏳ รอประกาศ', icon: 'clock' },
-                'published': { bg: 'bg-emerald-50', text: 'text-emerald-700', label: '✅ ประกาศแล้ว', icon: 'check-circle' },
-                'claimed': { bg: 'bg-blue-50', text: 'text-blue-700', label: '🎉 เสร็จสิ้น', icon: 'flag' }
-            };
-
             posts.forEach(p => {
-                const statusInfo = statusBadges[p.status] || statusBadges['pending'];
                 const row = `
-                <tr class="hover:bg-slate-50 transition-all hover:shadow-md border-l-4 border-l-slate-100 hover:border-l-primary-400">
+                <tr class="hover:bg-slate-50 transition-colors">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-4">
-                            <div class="relative">
-                                <img src="${(p.image_url && p.image_url.split(',')[0]) || 'https://via.placeholder.com/50'}" class="w-14 h-14 rounded-xl object-cover border-2 border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-                            </div>
+                            <img src="${(p.image_url && p.image_url.split(',')[0]) || 'https://via.placeholder.com/50'}" class="w-12 h-12 rounded-xl object-cover border shadow-sm">
                             <div>
-                                <div class="font-bold text-slate-900 line-clamp-1 text-sm">${p.title}</div>
-                                <div class="text-[11px] text-slate-500 font-semibold mt-1">📍 ${p.location}</div>
+                                <div class="font-bold text-slate-900 line-clamp-1">${p.title}</div>
+                                <div class="text-[10px] text-slate-400 font-bold uppercase">${p.location}</div>
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-4">
-                        <div class="inline-flex items-center gap-2 px-3 py-1.5 bg-primary-50 rounded-lg">
-                            <div class="w-2 h-2 bg-primary-400 rounded-full"></div>
-                            <div class="text-sm font-bold text-primary-700">${p.author_name || '-'}</div>
-                        </div>
+                        <div class="text-sm font-bold text-primary-600">${p.author_name || '-'}</div>
                     </td>
+                    <td class="px-6 py-4 text-xs font-bold text-slate-500">${p.category || 'อื่นๆ'}</td>
                     <td class="px-6 py-4">
-                        <span class="inline-block px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg text-xs font-bold">
-                            ${p.category || 'อื่นๆ'}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4">
-                        <select onchange="actionPostStatus('${p.id}', this.value)" class="text-xs font-bold rounded-lg px-3 py-2 ${statusInfo.bg} ${statusInfo.text} border-none outline-none cursor-pointer transition-all hover:shadow-md">
-                            <option value="pending" ${p.status === 'pending' ? 'selected' : ''}>⏳ รอประกาศ</option>
-                            <option value="published" ${p.status === 'published' ? 'selected' : ''}>✅ ประกาศแล้ว</option>
-                            <option value="claimed" ${p.status === 'claimed' ? 'selected' : ''}>🎉 เสร็จสิ้น</option>
+                        <select onchange="actionPostStatus('${p.id}', this.value)" class="text-[11px] font-bold rounded-lg px-2 py-1 bg-slate-100 border-none outline-none cursor-pointer">
+                            <option value="pending" ${p.status === 'pending' ? 'selected' : ''}>รอประกาศ</option>
+                            <option value="published" ${p.status === 'published' ? 'selected' : ''}>ประกาศแล้ว</option>
+                            <option value="claimed" ${p.status === 'claimed' ? 'selected' : ''}>เสร็จสิ้น</option>
                         </select>
                     </td>
                     <td class="px-6 py-4 text-right">
                         <div class="flex justify-end gap-2">
-                            <a href="../post-detail.html?id=${p.id}" target="_blank" class="p-2.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 hover:scale-110 transition-all shadow-sm hover:shadow-md" title="ดูรายละเอียด">
-                                <i data-lucide="eye" class="w-4 h-4"></i>
-                            </a>
-                            <button onclick="actionDeletePost('${p.id}')" class="p-2.5 bg-rose-50 text-rose-600 rounded-lg hover:bg-rose-100 hover:scale-110 transition-all shadow-sm hover:shadow-md" title="ลบโพสต์">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
+                            <a href="../post-detail.html?id=${p.id}" target="_blank" class="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-primary-50 hover:text-primary-600 transition-colors"><i data-lucide="eye" class="w-4 h-4"></i></a>
+                            <button onclick="actionDeletePost('${p.id}')" class="p-2 bg-slate-100 text-slate-600 rounded-lg hover:bg-rose-50 hover:text-rose-600 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     </td>
                 </tr>`;

@@ -45,43 +45,26 @@
         </div>
 
         <form id="login-form" class="space-y-4">
-            <!-- Super Admin Toggle -->
-            <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4">
-                <label class="text-sm font-bold text-gray-700">Super Admin (PIN)</label>
-                <input type="checkbox" id="is-super-admin" class="w-4 h-4 cursor-pointer">
-            </div>
-
-            <div id="email-field">
+            <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1.5 ml-1">อีเมล</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i data-lucide="mail" class="w-5 h-5 text-gray-400"></i>
                     </div>
-                    <input type="email" id="email"
+                    <input type="email" id="email" required
                         class="w-full pl-11 pr-4 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-900 font-medium focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all shadow-sm"
                         placeholder="you@example.com">
                 </div>
             </div>
-            <div id="password-field">
+            <div>
                 <label class="block text-sm font-bold text-gray-700 mb-1.5 ml-1">รหัสผ่าน</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i data-lucide="lock" class="w-5 h-5 text-gray-400"></i>
                     </div>
-                    <input type="password" id="password"
+                    <input type="password" id="password" required
                         class="w-full pl-11 pr-4 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-900 font-medium focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all shadow-sm"
                         placeholder="••••••••">
-                </div>
-            </div>
-            <div id="pin-field" style="display: none;">
-                <label class="block text-sm font-bold text-gray-700 mb-1.5 ml-1">PIN Code</label>
-                <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                        <i data-lucide="key" class="w-5 h-5 text-gray-400"></i>
-                    </div>
-                    <input type="password" id="pin" 
-                        class="w-full pl-11 pr-4 py-3.5 bg-white/70 backdrop-blur-sm border border-gray-200 rounded-2xl text-gray-900 font-medium focus:ring-4 focus:ring-primary-500/20 focus:border-primary-500 outline-none transition-all shadow-sm"
-                        placeholder="Enter PIN">
                 </div>
             </div>
 
@@ -122,47 +105,6 @@
 
     <script src="js/api.js"></script>
     <script>
-        const superAdminCheckbox = document.getElementById('is-super-admin');
-        const emailField = document.getElementById('email-field');
-        const passwordField = document.getElementById('password-field');
-        const pinField = document.getElementById('pin-field');
-        const submitBtn = document.getElementById('submit-btn');
-        const emailInput = document.getElementById('email');
-        const passwordInput = document.getElementById('password');
-        const pinInput = document.getElementById('pin');
-
-        // Toggle between email/password and PIN
-        superAdminCheckbox.addEventListener('change', (e) => {
-            if (e.target.checked) {
-                // Show PIN field, hide email/password
-                emailField.style.display = 'none';
-                passwordField.style.display = 'none';
-                pinField.style.display = 'block';
-                
-                // Clear email/password and remove required attribute
-                emailInput.value = '';
-                passwordInput.value = '';
-                emailInput.removeAttribute('required');
-                passwordInput.removeAttribute('required');
-                pinInput.setAttribute('required', 'required');
-                
-                submitBtn.querySelector('span').textContent = 'Super Admin Login (PIN)';
-            } else {
-                // Show email/password, hide PIN
-                emailField.style.display = 'block';
-                passwordField.style.display = 'block';
-                pinField.style.display = 'none';
-                
-                // Clear PIN and remove required attribute
-                pinInput.value = '';
-                pinInput.removeAttribute('required');
-                emailInput.setAttribute('required', 'required');
-                passwordInput.setAttribute('required', 'required');
-                
-                submitBtn.querySelector('span').textContent = 'เข้าสู่ระบบด้วย Email';
-            }
-        });
-
         document.getElementById('login-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('submit-btn');
@@ -170,38 +112,13 @@
             btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> กำลังเข้าสู่ระบบ...';
             btn.disabled = true;
 
-            const isSuperAdmin = document.getElementById('is-super-admin').checked;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
 
             try {
-                if (isSuperAdmin) {
-                    // Super admin login with PIN
-                    const pin = document.getElementById('pin').value;
-                    if (!pin) throw new Error('กรุณาใส่ PIN');
-                    
-                    const response = await fetch(`${API_BASE_URL}/auth/login/pin`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: 'superadmin', password: pin })
-                    });
-                    
-                    if (!response.ok) {
-                        const error = await response.json();
-                        throw new Error(error.detail || 'PIN login failed');
-                    }
-                    
-                    const data = await response.json();
-                    localStorage.setItem('access_token', data.token);
-                    window.location.href = 'admin/posts.html';
-                } else {
-                    // Normal email + password login
-                    const email = document.getElementById('email').value;
-                    const password = document.getElementById('password').value;
-                    if (!email || !password) throw new Error('กรุณาใส่อีเมลและรหัสผ่าน');
-                    
-                    await api.loginWithEmail(email, password);
-                }
+                await api.loginWithEmail(email, password);
             } catch (err) {
-                alert('เข้าสู่ระบบล้มเหลว: ' + err.message);
+                alert('อีเมลหรือรหัสผ่านไม่ถูกต้อง หรือเกิดข้อผิดพลาด: ' + err.message);
                 btn.innerHTML = originalHTML;
                 btn.disabled = false;
                 lucide.createIcons();

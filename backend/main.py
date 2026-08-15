@@ -6,7 +6,7 @@ from fastapi import FastAPI, HTTPException, Depends, UploadFile, File, Request, 
 from typing import Optional
 from fastapi.middleware.cors import CORSMiddleware
 from database import get_supabase
-from models import UserRegister, UserLogin, SuperAdminLogin, PostCreate, PostUpdate, MessageCreate
+from models import UserRegister, UserLogin, PostCreate, PostUpdate, MessageCreate
 import uuid
 import httpx
 import urllib.parse
@@ -44,20 +44,6 @@ def _ensure_user_metadata(user_id: str, defaults: dict):
 # Helper: safe user token authentication
 # -------------------------------------------------
 def _get_user_from_token(token: str):
-    # Check if it's a super admin PIN token
-    if token.startswith("super_admin_pin_token_"):
-        # Create a fake user object for super admin
-        class FakeSuperAdminUser:
-            def __init__(self):
-                self.id = "superadmin"
-                self.email = "superadmin@admin.local"
-                self.user_metadata = {
-                    "is_admin": True,
-                    "is_super_admin": True,
-                    "full_name": "Super Admin"
-                }
-        return FakeSuperAdminUser()
-    
     supabase = get_supabase()
     try:
         user_resp = supabase.auth.get_user(token)
@@ -392,24 +378,6 @@ def login(user: UserLogin):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-# --- SUPER ADMIN LOGIN (PIN only) ---
-@app.post("/auth/login/pin")
-def login_pin(data: SuperAdminLogin):
-    """Super admin login with PIN only"""
-    # Valid PINs
-    valid_pins = ["adminayaya", "adminmoss", "adminpp"]
-    
-    if data.password not in valid_pins:
-        raise HTTPException(status_code=403, detail="Invalid PIN")
-    
-    # Return a hardcoded token for super admin (or create one)
-    # For production, use proper token generation
-    return {
-        "token": "super_admin_pin_token_" + data.password,
-        "message": "Super admin login successful",
-        "user_id": "superadmin"
-    }
-
 # --- USERS ---
 @app.get("/users/me")
 def get_me(request: Request):
@@ -418,19 +386,6 @@ def get_me(request: Request):
         raise HTTPException(status_code=401, detail="Unauthorized")
     
     token = auth_header.split(" ")[1]
-    
-    # Check if it's a super admin PIN token
-    if token.startswith("super_admin_pin_token_"):
-        return {
-            "id": "superadmin",
-            "email": "superadmin@admin.local",
-            "full_name": "Super Admin",
-            "avatar_url": "",
-            "line_social_id": "",
-            "is_admin": True,
-            "is_super_admin": True
-        }
-    
     supabase = get_supabase()
     
     try:
