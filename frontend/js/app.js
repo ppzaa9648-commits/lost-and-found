@@ -523,8 +523,7 @@ async function ownerUpdateStatus(newStatus) {
         : (newStatus === 'claimed' ? 'เสร็จสิ้น' : 'ประกาศแล้ว');
 
     try {
-        const response = await fetch(`${API_URL}/admin/posts/${postId}/status`, {
-            method: 'PUT',
+const response = await fetch(`${API_BASE_URL}/admin/posts/${postId}/status`, {            method: 'PUT',
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`
@@ -725,11 +724,8 @@ async function checkFirstLogin() {
 
         // If super admin, skip LINE ID setup and go to admin page
         if (user && user.is_super_admin) {
-            setTimeout(() => {
-                window.location.href = 'admin/posts.html';
-            }, 500);
-            return;
-        }
+    return;
+}
 
         if (!user.line_social_id) {
             // Show the mandatory LINE ID modal

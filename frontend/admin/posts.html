@@ -225,13 +225,19 @@
                     return;
                 }
 
-                const meResp = await fetch(`${API_URL}/users/me`, { headers: getAdminHeaders() });
-                if (meResp.status === 401 || meResp.status === 403) {
-                    alert('ปฏิเสธการเข้าถึง');
-                    window.location.href = '../index.html';
-                    return;
-                }
+                const meResp = await fetch(`${API_URL}/users/me`, {
+    headers: getAdminHeaders()
+});
 
+console.log('ME STATUS:', meResp.status);
+
+if (meResp.status === 401 || meResp.status === 403) {
+    const errorData = await meResp.text();
+    console.log('ME ERROR:', errorData);
+
+    alert(`เข้าถึงไม่ได้: ${meResp.status}`);
+    return;
+}
                 const pResp = await fetch(`${API_URL}/posts`, { headers: getAdminHeaders() });
                 const pData = await pResp.json();
                 
