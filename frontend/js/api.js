@@ -34,7 +34,13 @@ const api = {
             
             if (data.token) {
                 localStorage.setItem('access_token', data.token);
-                window.location.href = 'index.html';
+                if (data.is_super_admin) {
+    window.location.href = 'admin/super-admin.html';
+} else if (data.is_admin) {
+    window.location.href = 'admin/dashboard.html';
+} else {
+    window.location.href = 'index.html';
+}
             }
             return data;
         } catch (error) {
